@@ -32,15 +32,16 @@ completion ref str = do
 repl :: SymTab -> IO ()
 repl env = do
     completions <- newIORef env
-    runInputT (settings completions) (loop completions env)
+    runInputT (settings completions) $ withInterrupt (loop completions env)
     where
         loop :: Completions -> SymTab -> InputT IO ()
         loop ref env' = do
             lift $ modifyIORef ref (const env')
-            minput <- getInputLine "% "
+            minput <- handle (\Interrupt -> return $ Just "interrupted") $ getInputLine "% "
             case minput of
                 Nothing     -> return ()
                 Just "quit" -> return ()
+                Just "interrupted" -> loop ref env'
                 Just input  -> do
                     newenv <- case parse Parser.expr "stdin" input of
                         Left err  -> do
