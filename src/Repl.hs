@@ -51,6 +51,6 @@ repl env = do
                             lift $ hFlush stdout
                             outputStrLn $ "\r% " ++ show ast
                             (val,ne) <- lift $ runStateT (eval ast) env'
-                            outputStrLn $ ">> " ++ show val
+                            outputStrLn $ show val
                             return ne
                     loop ref newenv

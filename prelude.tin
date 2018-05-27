@@ -251,6 +251,8 @@
   (print (file/read fh))
   (= {str-version} (map show version))
   (= {started-on} (join "session started on: " (datetime/current)))
-  (print "Version:" (join (fst str-version) "." (snd str-version) "." (trd str-version) " Nakatomi Plaza " started-on))
+  (= {host-info} (join "Your host is running " (sys/os) "/" (sys/arch) " and was compiled with " (sys/compiler) " " (sys/compiler-version)))
+  (print "Version:" (join (fst str-version) "." (snd str-version) "." (trd str-version) " \"Nakatomi Plaza\" " started-on))
+  (print host-info)
   (file/close fh))
  

@@ -8,10 +8,12 @@ import           Text.Megaparsec.Error (parseErrorPretty')
 import           Builtins.Builtin      (addBuiltins)
 import           Builtins.Core         (CoreBuiltin (..))
 import           Builtins.DateTime     (DateTimeBuiltin (..))
+import           Builtins.Env          (EnvBuiltin (..))
 import           Builtins.Equality     (EqualityBuiltin (..))
 import           Builtins.File         (FileBuiltin (..))
 import           Builtins.List         (ListBuiltin (..))
 import           Builtins.Math         (MathBuiltin (..))
+import           Builtins.System       (SystemBuiltin (..))
 import           Colour.TwentyFourBit
 import           Core
 import           Environment
@@ -43,6 +45,8 @@ someFunc = do
           addBuiltins FileBuiltin
           addBuiltins DateTimeBuiltin
           addBuiltins EqualityBuiltin
+          addBuiltins EnvBuiltin
+          addBuiltins SystemBuiltin
           evaluateSource "prelude.tin" prelude
     if null r then putStrLn "" else print r
     repl env
