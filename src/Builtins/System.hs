@@ -1,13 +1,28 @@
 module Builtins.System where
 
-import           Data.List        (intercalate)
-import           Data.Version     (versionBranch)
+import           Control.Monad.State (lift)
+import           Data.List           (intercalate, isPrefixOf)
+import           Data.Version        (versionBranch)
 import           System.Info
 
 import           Builtins.Builtin
 import           Types
 
 data SystemBuiltin = SystemBuiltin deriving (Show)
+
+linuxCPUNames :: IO [String]
+linuxCPUNames = do
+  lines' <- lines <$> readFile "/proc/cpuinfo"
+  pure . map (unwords . drop 3 . words) $
+    filter ("model name" `isPrefixOf`) lines'
+
+osBuiltinCpuDoc = Just "sys/cpu returns the current cpu name"
+osBuiltinCpu :: Context LVal
+osBuiltinCpu = Str . head <$> lift linuxCPUNames
+
+osbuiltinCpuCoresDoc = Just "sys/cpu-cores returns the number of cores"
+osBuiltinCpuCores :: Context LVal
+osBuiltinCpuCores = Num . toInteger . length <$> lift linuxCPUNames
 
 osBuiltinDoc = Just "sys/os returns the current operating system"
 osBuiltin :: Context LVal
@@ -31,5 +46,7 @@ instance Builtin SystemBuiltin where
                 , ("sys/arch", archBuiltinDoc, archBuiltin)
                 , ("sys/compiler", compilerNameBuiltinDoc, compilerNameBuiltin)
                 , ("sys/compiler-version", compilerVersionBuiltinDoc, compilerVersionBuiltin)
+                , ("sys/cpu", osBuiltinCpuDoc, osBuiltinCpu)
+                , ("sys/cpu-cores", osbuiltinCpuCoresDoc, osBuiltinCpuCores)
                 ]
     builtins _ = []
