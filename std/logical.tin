@@ -1,0 +1,12 @@
+;;; Logical Functions
+
+; Logical Functions
+(fun {not x} 
+  "(not x)\nreturn the inverse of x"
+  {if x {#f} {#t}})
+(fun {or x y} 
+  "(or x y)\nreturn wether either x or y is #t"  
+  {if x {#t} {if y {#t} {#f}}})
+(fun {and x y} 
+  "(and x y)\nreturn #t if both x and y are true" 
+  {if x {if y {#t} {#f}} {#f}})

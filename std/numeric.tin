@@ -1,0 +1,21 @@
+;;; Numeric Functions
+
+; Minimum of Arguments
+(fun {min & xs} "(min & xs)\nreturn the minimum of all given numbers" {
+  if (== (tail xs) nil) {fst xs}
+    {do 
+      (= {rest} (unpack min (tail xs)))
+      (= {item} (fst xs))
+      (if (< item rest) {item} {rest})
+    }
+})
+
+; Maximum of Arguments
+(fun {max & xs} "(max & xs)\nreturn the maximum of all given numbers" {
+  if (== (tail xs) nil) {fst xs}
+    {do 
+      (= {rest} (unpack max (tail xs)))
+      (= {item} (fst xs))
+      (if (> item rest) {item} {rest})
+    }  
+})

@@ -1,0 +1,136 @@
+;;; List Functions
+
+; First, Second, or Third Item in List
+(fun {fst l} "(fst l)\nreturn the first item in a list" { eval (head l) })
+(fun {snd l} "(snd l)\nreturn the second item in a list" { eval (head (tail l)) })
+(fun {trd l} "(trd l)\nreturn the third item in a list" { eval (head (tail (tail l))) })
+
+; List Length
+(fun {len l} "(len l)\nreturn the length of list n" {
+  if (== l nil)
+    {0}
+    {+ 1 (len (tail l))}
+})
+
+; Nth item in List
+(fun {nth n l} "(nth n l)\nreturn the nth n item in the list l" {
+  if (== n 0)
+    {fst l}
+    {nth (- n 1) (tail l)}
+})
+
+; Last item in List
+(fun {last l} "(last l)\nreturn the last item in list l" {nth (- (len l) 1) l})
+
+; Apply Function to List
+(fun {map f l} "(map f l)\nApply the given function f to the list l" {
+  if (== l nil)
+    {nil}
+    {join (list (f (fst l))) (map f (tail l))}
+})
+
+; Apply Filter to List
+(fun {filter f l} "(filter f l)\nfilter the given list l with function f" {
+  if (== l nil)
+    {nil}
+    {join (if (f (fst l)) {head l} {nil}) (filter f (tail l))}
+})
+
+; Return all of list but last element
+(fun {init l} "(init l)\nreturn all elements in list l except the last element" {
+  if (== (tail l) nil)
+    {nil}
+    {join (head l) (init (tail l))}
+})
+
+; Reverse List
+(fun {reverse l} "(reverse l)\nreturn the list l with the element order reversed" {
+  if (== l nil)
+    {nil}
+    {join (reverse (tail l)) (head l)}
+})
+
+; Fold Left
+(fun {foldl f z l} "(foldl f z l)\nfold list l left by applying function f, starting with initial value z" {
+  if (== l nil) 
+    {z}
+    {foldl f (f z (fst l)) (tail l)}
+})
+
+; Fold Right
+(fun {foldr f z l} "(foldr f z l)\nfold list l right by applying function f, starting with initial value z" {
+  if (== l nil) 
+    {z}
+    {f (fst l) (foldr f z (tail l))}
+})
+
+(fun {sum l} "(sum l)\nSum of all numbers in list l" {foldl + 0 l})
+(fun {product l} "(product l)\nProduct of all numbers in list l" {foldl * 1 l})
+
+; Take N items
+(fun {take n l} "(take n l)\ntake n items from list l" {
+  if (== n 0)
+    {nil}
+    {join (head l) (take (- n 1) (tail l))}
+})
+
+; Drop N items
+(fun {drop n l} "(drop n l)\ndrop n items from list l" {
+  if (== n 0)
+    {l}
+    {drop (- n 1) (tail l)}
+})
+
+; Split at N
+(fun {split n l} "(split n l)\nsplit list l at intersection n" {list (take n l) (drop n l)})
+
+; Take While
+(fun {take-while f l} "(take-while f l)\ntake items from list l while function f is true" {
+  if (not (unpack f (head l)))
+    {nil}
+    {join (head l) (take-while f (tail l))}
+})
+
+; Drop While
+(fun {drop-while f l} "(drop-while f l)\ndrop elements from list l while function f is true" {
+  if (not (unpack f (head l)))
+    {l}
+    {drop-while f (tail l)}
+})
+
+; Element of List
+(fun {elem x l} "(elem x l)\nreturns true of element x is in list l" {
+  if (== l nil)
+    {false}
+    {if (== x (fst l)) {true} {elem x (tail l)}}
+})
+
+; Find element in list of pairs
+(fun {lookup x l} "(lookup x l)\nfind the item x and return its paired value in a list of pairs" {
+  if (== l nil)
+    {error "No Element Found"}
+    {do
+      (= {key} (fst (fst l)))
+      (= {val} (snd (fst l)))
+      (if (== key x) {val} {lookup x (tail l)})
+    }
+})
+
+; Zip two lists together into a list of pairs
+(fun {zip x y} "(zip x y)\nzip two lists together into a list of pairs" {
+  if (or (== x nil) (== y nil))
+    {nil}
+    {join (list (join (head x) (head y))) (zip (tail x) (tail y))}
+})
+
+; Unzip a list of pairs into two lists
+(fun {unzip l} "(unzip x y)\nunzip a list of pairs into two lists" {
+  if (== l nil)
+    {{nil nil}}
+    {do
+      (= {x} (fst l))
+      (= {xs} (unzip (tail l)))
+      (list (join (head x) (fst xs)) (join (tail x) (snd xs)))
+    }
+})
+

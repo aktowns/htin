@@ -65,5 +65,5 @@ eval x@(SExpr xs) = do
     else call (head evald) $ SExpr (tail evald)
 eval err@(Err _) = do
     lift $ print err
-    return $ SExpr []
+    return $ QExpr []
 eval x = return x

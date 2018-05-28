@@ -1,0 +1,25 @@
+;;; Functional Functions
+
+; Open new scope
+(fun {let b} "(let body)\nintroduces a new scope" {
+  ((\ {_} b) ())
+})
+
+; Unpack List to Function
+(fun {unpack f l} "(unpack f l)\nunpacks the given list l and calls it as arguments to function f" {
+  eval (join (list f) l)
+})
+
+; Unapply List to Function
+(fun {pack f & xs} "(pack f & xs)\nhands the varargs xs to the function f as a list" {f xs})
+
+; Curried and Uncurried calling
+(def {curry} unpack)
+(def {uncurry} pack)
+
+; Perform Several things in Sequence
+(fun {do & l} "(do & l)\nPerform the given varadic argument list l in sequence" {
+  if (== l nil)
+    {nil}
+    {last l}
+})

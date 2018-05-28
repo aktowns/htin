@@ -1,5 +1,4 @@
 {-# LANGUAGE FlexibleInstances    #-}
-{-# LANGUAGE OverloadedStrings    #-}
 {-# LANGUAGE RecordWildCards      #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 module Types where
@@ -11,8 +10,6 @@ import           Data.Text              (Text)
 import qualified Data.Text              as T
 import qualified Data.Text.IO           as T
 import qualified Data.Text.Lazy.Builder as T
-import           Data.Vector            (Vector)
-import qualified Data.Vector            as V
 import           Debug.Trace            (traceM)
 import           Formatting
 import           System.IO              (Handle)

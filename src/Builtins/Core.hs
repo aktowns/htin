@@ -1,11 +1,15 @@
 module Builtins.Core where
 
+import           Control.Monad         (when)
 import           Control.Monad.State   (lift)
 import           Data.Bifoldable       (bifold)
 import           Data.Foldable         (traverse_)
 import           Data.Text             (Text)
 import qualified Data.Text             as T
 import qualified Data.Text.IO          as T
+import           System.Directory
+import           System.Environment
+import           System.FilePath
 import           Text.Megaparsec       (parse)
 import           Text.Megaparsec.Error (parseErrorPretty')
 
@@ -23,6 +27,22 @@ data Scope = Global | Local
 isGlobal :: Scope -> Bool
 isGlobal Global = True
 isGlobal _      = False
+
+searchForFile :: FilePath -> [FilePath] -> IO (Maybe FilePath)
+searchForFile path []     = return Nothing
+searchForFile path (x:xs) = do
+    let fullPath = x </> path
+    exists <- doesFileExist fullPath
+    if exists then return (Just fullPath)
+    else searchForFile path xs
+
+searchPaths :: IO [FilePath]
+searchPaths = do
+    paths <- lookupEnv "TIN_PATH"
+    current <- getCurrentDirectory
+    case paths of
+        Nothing -> return [current]
+        Just xs -> return $ current : splitSearchPath xs
 
 builtinLambdaDoc = Just "(\\ doc? args body)\nReturns a lambda with an optional string documentation line\n\
                         \if the args contains & and is proceeded by one final argument, all remaining arguments\n\
@@ -62,13 +82,24 @@ builtinEval (SExpr xs)
     | otherwise = return $ Err $ "eval handed incorrect arguments, was given: " <> tshow xs
 
 builtinLoadDoc = Just "(load path)\nLoads the given file into the current environment"
-builtinLoad :: LVal -> Context LVal
-builtinLoad (SExpr xs)
+builtinLoad :: Bool -> LVal -> Context LVal
+builtinLoad verbose (SExpr xs)
     | (Str path) <- head xs = do
-        contents <- lift $ readFile (T.unpack path)
+        searchDirs <- lift searchPaths
+        Just file <- lift $ searchForFile (T.unpack path) searchDirs
+        lift $ when verbose $ putStrLn $ "loading file " ++ file
+        contents <- lift $ readFile file
         case parse Parser.exprs (T.unpack path) contents of
-            Left err -> return $ Str "failed"
-            Right x  -> QExpr <$> traverse eval x
+            Left err -> do
+                lift $ putStrLn (parseErrorPretty' contents err)
+                return $ Boolean False
+            Right x  -> do
+                evald <- traverse eval x
+                let errors = filter isErr evald
+                if null errors then return $ Boolean True
+                else do
+                    lift $ ppp errors
+                    return $ Boolean False
 
 builtinIfDoc = Just "(if condition truebody falsebody)\nEvaluates the given condition and if #t evalutes truebody otherwise evaluates falsebody"
 builtinIf :: LVal -> Context LVal
@@ -118,7 +149,8 @@ builtinError (SExpr xs)
 
 instance Builtin CoreBuiltin where
     builtins _ = [ ("eval", builtinEvalDoc, builtinEval)
-                 , ("load", builtinLoadDoc, builtinLoad)
+                 , ("load", builtinLoadDoc, builtinLoad False)
+                 , ("load-verbose", builtinLoadDoc, builtinLoad True)
                  , ("if", builtinIfDoc, builtinIf)
                  , ("\\", builtinLambdaDoc, builtinLambda)
                  , ("def", builtinDefDoc, builtinDef)

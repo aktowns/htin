@@ -1,0 +1,16 @@
+;;; Conditional Functions
+
+(fun {select & cs} "(select & cs)\ntakes two or more 2 element lists selecting the second element of the first list with a positive head" {
+  if (== cs nil)
+    {error "No Selection Found"}
+    {if (fst (fst cs)) {snd (fst cs)} {unpack select (tail cs)}}
+})
+
+(fun {case x & cs} "(case x & cs)\ntakes two or more 2 element lists selecting the second element of the first list to match x" {
+  if (== cs nil)
+    {error "No Case Found"}
+    {if (== x (fst (fst cs))) {snd (fst cs)} {
+    unpack case (join (list x) (tail cs))}}
+})
+
+(def {otherwise} true)

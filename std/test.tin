@@ -1,0 +1,27 @@
+(fun {assert l r msg} "(assert l r msg)\nAssert that the left side is equal to the right, if it isn't print the msg" {
+  if (== l r) 
+    {#t}
+    {do 
+      (print (join "assertion \"" msg "\" failed " (show l) " != " (show r)))
+      #f
+    }
+})
+
+(fun {describe name & body} "run a test case" {
+  do 
+    (println name)
+    (map eval body)
+})
+
+(fun {it name & body} "run a unit of a test a case" {
+  do 
+    (print (join "  " name ":"))
+    (map (\ {test} { do
+      (if (eval (eval body)) {print " passed"} {print " failed"})
+      ;(map (\ {part} {if (part) {print " passed "} {print " failed "}}) test)
+      (println "")
+    }) body)
+    nil
+})
+
+(fun {should l r} "should l be r" {== l r})
