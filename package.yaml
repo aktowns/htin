@@ -1,14 +1,15 @@
 name:                htin
 version:             0.1.0.0
-github:              "githubuser/htin"
+github:              "aktowns/htin"
 license:             BSD3
-author:              "Author name here"
-maintainer:          "example@example.com"
-copyright:           "2018 Author name here"
+author:              "Ashley Towns"
+maintainer:          "tin@ashleytowns.id.au"
+copyright:           "2018 Ashley Towns"
 
 extra-source-files:
 - README.md
 - ChangeLog.md
+- prelude.tin
 
 # Metadata used when publishing your package
 # synopsis:            Short description of your package
@@ -38,7 +39,7 @@ library:
   - OverloadedStrings
 
 executables:
-  htin-exe:
+  htin:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
@@ -46,6 +47,7 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     - -Wall 
+    - -fwarn-tabs
     - -Wincomplete-uni-patterns 
     - -Wincomplete-record-updates 
     - -Wmissing-import-lists
