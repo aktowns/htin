@@ -10,7 +10,7 @@ data DateTimeBuiltin = DateTimeBuiltin deriving (Show)
 
 currentDateTimeBuiltinDoc = Just "datetime/current shows the current zoned datetime"
 currentDateTimeBuiltin :: Context LVal
-currentDateTimeBuiltin = lift $ Str . show <$> getZonedTime
+currentDateTimeBuiltin = lift $ Str . tshow <$> getZonedTime
 
 instance Builtin DateTimeBuiltin where
     builtins _ = []

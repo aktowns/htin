@@ -3,6 +3,9 @@ module Builtins.File where
 import           Control.Monad.State (lift)
 import           Data.Foldable       (traverse_)
 import           Data.List           (find)
+import           Data.Text           (Text)
+import qualified Data.Text           as T
+import qualified Data.Text.IO        as T
 import           System.IO
 
 import           Builtins.Builtin
@@ -28,32 +31,32 @@ builtinFileOpen :: LVal -> Context LVal
 builtinFileOpen (SExpr xs)
     | length xs /= 2 = return $ Err "file/open requires 2 arguments, filepath and filemode"
     | (Str file) <- head xs, (Num mode) <- xs !! 1, (Just hmode) <- lookupMode mode = do
-        handle <- lift $ openFile file hmode
+        handle <- lift $ openFile (T.unpack file) hmode
         return $ Hnd $ IOHandle handle
-    | otherwise = return $ Err $ "file/open handed incorrect arguments expected filepath and filemode, got" ++ show xs
+    | otherwise = return $ Err $ "file/open handed incorrect arguments expected filepath and filemode, got" <> tshow xs
 
-withHandle :: String -> (Handle -> Context LVal) -> LVal -> Context LVal
+withHandle :: Text -> (Handle -> Context LVal) -> LVal -> Context LVal
 withHandle fn  ctx (SExpr xs)
-    | length xs /= 1 = return $ Err $ fn ++ " requires 1 argument filehandle"
+    | length xs /= 1 = return $ Err $ fn <> " requires 1 argument filehandle"
     | (Hnd (IOHandle fh)) <- head xs = ctx fh
-    | otherwise = return $ Err $ fn ++ "handed incorrect arguments expected filepath and filemode, got" ++ show xs
+    | otherwise = return $ Err $ fn <> "handed incorrect arguments expected filepath and filemode, got" <> tshow xs
 
 builtinFileReadDoc = Just "(file/read handle)\nReads all contents of the given handle returning a string"
 builtinFileRead :: LVal -> Context LVal
 builtinFileRead = withHandle "file/read" $ \fh -> do
-    contents <- lift $ hGetContents fh
+    contents <- lift $ T.hGetContents fh
     return $ Str contents
 
 builtinFileReadCharDoc = Just "(file/read-char handle)\nReads a character from the handle at its current position"
 builtinFileReadChar :: LVal -> Context LVal
 builtinFileReadChar = withHandle "file/read-char" $ \fh -> do
     char <- lift $ hGetChar fh
-    return $ Str [char]
+    return $ Str (T.singleton char)
 
 builtinFileReadLineDoc = Just "(file/read-line handle)\nReads a line from the handle at its current position"
 builtinFileReadLine :: LVal -> Context LVal
 builtinFileReadLine = withHandle "file/read-line" $ \fh -> do
-    line <- lift $ hGetLine fh
+    line <- lift $ T.hGetLine fh
     return $ Str line
 
 builtinFileIsOpenDoc = Just "(file/is-open handle)\nReturns #t if the file handle is currently open"

@@ -1,18 +1,20 @@
 module Builtins.Builtin where
 
+import           Data.Text   (Text)
 import           Debug.Trace (traceM)
+
 import           Environment
 import           Types
 
 class (Show a) => Builtin a where
-    builtins :: a -> [(String, Maybe String, LBuiltin)]
-    globals  :: a -> [(String, Maybe String, Context LVal)]
+    builtins :: a -> [(Text, Maybe Text, LBuiltin)]
+    globals  :: a -> [(Text, Maybe Text, Context LVal)]
     initial  :: a -> Context ()
 
-addBuiltin :: String -> Maybe String -> LBuiltin -> Context ()
+addBuiltin :: Text -> Maybe Text -> LBuiltin -> Context ()
 addBuiltin x doc fn = addSymbolParent x $ Builtin doc fn
 
-addBuiltin' :: String -> Maybe String -> Context LVal -> Context ()
+addBuiltin' :: Text -> Maybe Text -> Context LVal -> Context ()
 addBuiltin' x doc fn = addSymbolParent x $ BuiltinVar doc fn
 
 addBuiltins :: Builtin a => a -> Context ()

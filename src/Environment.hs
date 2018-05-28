@@ -3,26 +3,28 @@ module Environment where
 import           Control.Monad.State
 import qualified Data.Map              as M
 import qualified Data.Map.Merge.Strict as MM
+import           Data.Text             (Text)
 import           Debug.Trace           (traceM)
+import           Formatting
 
 import           Types
 
-envLookup :: String -> Context LVal
+envLookup :: Text -> Context LVal
 envLookup x = do
     (symtab, partab) <- get
     case (M.lookup x symtab, M.lookup x partab) of
         (Just v, _) -> return v -- prefer symtab
         (_, Just v) -> return v
-        _           -> return $ Err $ "Undefined variable " ++ x
+        _           -> return $ Err $ sformat ("undefined variable " % stext) x
 
-addSymbol :: String -> LVal -> Context ()
+addSymbol :: Text -> LVal -> Context ()
 addSymbol x val = do
     -- traceM $ "Inserting " ++ x ++ " into local environment"
     (symtab, partab) <- get
     put (M.insert x val symtab, partab)
     return ()
 
-addSymbolParent :: String -> LVal -> Context ()
+addSymbolParent :: Text -> LVal -> Context ()
 addSymbolParent x val = do
     --traceM $ "Inserting " ++ x ++ " into global environment"
     (symtab, partab) <- get
@@ -47,6 +49,5 @@ traceEnv = do
 emptyEnv :: SymTab
 emptyEnv = (M.fromList [], M.fromList [])
 
-emptyPartialEnv :: [(String, LVal)]
+emptyPartialEnv :: [(Text, LVal)]
 emptyPartialEnv = []
-

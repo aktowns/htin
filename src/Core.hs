@@ -3,7 +3,9 @@ module Core where
 
 import           Control.Monad.State (lift)
 import           Data.Foldable       (traverse_)
+import qualified Data.Text           as T
 import           Debug.Trace         (traceM)
+import           Formatting
 
 import           Environment
 import           Types
@@ -22,7 +24,7 @@ curriedArgs [] []                        = []
 curriedArgs formals []                   = formals
 curriedArgs [formal] [arg]               = []
 curriedArgs (formal:xs) (arg:xs')
-      | (Sym n) <- formal, head n == '&' = []
+      | (Sym n) <- formal, T.head n == '&' = []
       | otherwise                        = curriedArgs xs xs'
 
 isVarArg :: [LVal] -> Bool
@@ -48,8 +50,8 @@ call Lambda{..} (SExpr args) = clonedContext $ do
 call err@(Err _) _     = do
     lift $ print err
     return $ SExpr []
-call (QExpr []) a      = error $ "Attempted to call nil with args " ++ show a
-call x a               = return $ Err $ "Unhandled call target " ++ show x ++ " with args " ++ show a
+call (QExpr []) a      = error $ "attempted to call nil with args " ++ show a
+call x a               = error $ "unhandled call target " ++ show x ++ " with args " ++ show a
 
 eval :: LVal -> Context LVal
 eval (Sym n) = do

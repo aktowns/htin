@@ -24,14 +24,18 @@ dependencies:
 - base >= 4.7 && < 5
 - bytestring
 - containers
+- formatting
 - haskeline
 - megaparsec
 - mtl
+- text
 - time
 - transformers
 
 library:
   source-dirs: src
+  default-extensions: 
+  - OverloadedStrings
 
 executables:
   htin-exe:

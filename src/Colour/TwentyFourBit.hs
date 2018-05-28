@@ -1,92 +1,112 @@
-module Colour.TwentyFourBit where
+{-# LANGUAGE OverloadedStrings #-}
+module Colour.TwentyFourBit( fgBase00, bgBase00, fgBase01, bgBase01, fgBase02, bgBase02,
+                             fgBase03, bgBase03, fgBase04, bgBase04, fgBase05, bgBase05,
+                             fgBase06, bgBase06, fgBase07, bgBase07, fgBase08, bgBase08,
+                             fgBase09, bgBase09, fgBase0a, bgBase0a, fgBase0b, bgBase0b,
+                             fgBase0c, bgBase0c, fgBase0d, bgBase0d, fgBase0e, bgBase0e,
+                             fgBase0f, bgBase0f, trueColourReset, bgTrueColour, fgTrueColour,
+                             withColour
+                            ) where
+
+import           Data.Text (Text)
+import qualified Data.Text as Text
 
 import           Data.Word (Word8)
 
-strFgTrueColour :: (Word8, Word8, Word8) -> String
-strFgTrueColour (r,g,b) = "\x1B[38;2;" ++ show r ++ ";" ++ show g ++ ";" ++ show b ++ "m"
+tshow :: (Show a) => a -> Text
+tshow = Text.pack . show
 
-strBgTrueColour :: (Word8, Word8, Word8) -> String
-strBgTrueColour (r,g,b) = "\x1B[48;2;" ++ show r ++ ";" ++ show g ++ ";" ++ show b ++ "m"
+fgTrueColour :: (Word8, Word8, Word8) -> Text
+fgTrueColour (r,g,b) = "\x1B[38;2;" <> tshow r <> ";" <> tshow g <> ";" <> tshow b <> "m"
 
-strTrueColourReset :: String
-strTrueColourReset = "\x1B[0m"
+bgTrueColour :: (Word8, Word8, Word8) -> Text
+bgTrueColour (r,g,b) = "\x1B[48;2;" <> tshow r <> ";" <> tshow g <> ";" <> tshow b <> "m"
 
-fgBase00 :: String
-fgBase00 = strFgTrueColour (24, 24, 24)
-bgBase00 :: String
-bgBase00 = strBgTrueColour (24, 24, 24)
+withColour :: Text -> Text -> Text
+withColour c f = c <> f <> trueColourReset
 
-fgBase01 :: String
-fgBase01 = strFgTrueColour (40, 40, 40)
-bgBase01 :: String
-bgBase01 = strBgTrueColour (40, 40, 40)
+trueColourReset :: Text
+trueColourReset = "\x1B[0m"
 
-fgBase02 :: String
-fgBase02 = strFgTrueColour (56, 56, 56)
-bgBase02 :: String
-bgBase02 = strBgTrueColour (56, 56, 56)
+fgBase00 :: Text
+fgBase00 = fgTrueColour (24, 24, 24)
+bgBase00 :: Text
+bgBase00 = bgTrueColour (24, 24, 24)
 
-fgBase03 :: String
-fgBase03 = strFgTrueColour (88, 88, 88)
-bgBase03 :: String
-bgBase03 = strBgTrueColour (88, 88, 88)
+fgBase01 :: Text
+fgBase01 = fgTrueColour (40, 40, 40)
+bgBase01 :: Text
+bgBase01 = bgTrueColour (40, 40, 40)
 
-fgBase04 :: String
-fgBase04 = strFgTrueColour (184, 184, 184)
-bgBase04 :: String
-bgBase04 = strBgTrueColour (184, 184, 184)
+fgBase02 :: Text
+fgBase02 = fgTrueColour (56, 56, 56)
+bgBase02 :: Text
+bgBase02 = bgTrueColour (56, 56, 56)
 
-fgBase05 :: String
-fgBase05 = strFgTrueColour (216, 216, 216)
-bgBase05 :: String
-bgBase05 = strBgTrueColour (216, 216, 216)
+fgBase03 :: Text
+fgBase03 = fgTrueColour (88, 88, 88)
+bgBase03 :: Text
+bgBase03 = bgTrueColour (88, 88, 88)
 
-fgBase06 :: String
-fgBase06 = strFgTrueColour (232, 232, 232)
-bgBase06 :: String
-bgBase06 = strBgTrueColour (232, 232, 232)
+fgBase04 :: Text
+fgBase04 = fgTrueColour (184, 184, 184)
+bgBase04 :: Text
+bgBase04 = bgTrueColour (184, 184, 184)
 
-fgBase07 :: String
-fgBase07 = strFgTrueColour (248, 248, 248)
-bgBase07 :: String
-bgBase07 = strBgTrueColour (248, 248, 248)
+fgBase05 :: Text
+fgBase05 = fgTrueColour (216, 216, 216)
+bgBase05 :: Text
+bgBase05 = bgTrueColour (216, 216, 216)
 
-fgBase08 :: String
-fgBase08 = strFgTrueColour (171, 70, 66)
-bgBase08 :: String
-bgBase08 = strBgTrueColour (171, 70, 66)
+fgBase06 :: Text
+fgBase06 = fgTrueColour (232, 232, 232)
+bgBase06 :: Text
+bgBase06 = bgTrueColour (232, 232, 232)
 
-fgBase09 :: String
-fgBase09 = strFgTrueColour (220, 150, 86)
-bgBase09 :: String
-bgBase09 = strBgTrueColour (220, 150, 86)
+fgBase07 :: Text
+fgBase07 = fgTrueColour (248, 248, 248)
+bgBase07 :: Text
+bgBase07 = bgTrueColour (248, 248, 248)
 
-fgBase0a :: String
-fgBase0a = strFgTrueColour (247, 202, 136)
-bgBase0a :: String
-bgBase0a = strBgTrueColour (247, 202, 136)
+fgBase08 :: Text
+fgBase08 = fgTrueColour (171, 70, 66)
+bgBase08 :: Text
+bgBase08 = bgTrueColour (171, 70, 66)
 
-fgBase0b :: String
-fgBase0b = strFgTrueColour (161, 181, 108)
-bgBase0b :: String
-bgBase0b = strBgTrueColour (161, 181, 108)
+fgBase09 :: Text
+fgBase09 = fgTrueColour (220, 150, 86)
+bgBase09 :: Text
+bgBase09 = bgTrueColour (220, 150, 86)
 
-fgBase0c :: String
-fgBase0c = strFgTrueColour (134, 193, 185)
-bgBase0c :: String
-bgBase0c = strBgTrueColour (134, 193, 185)
+fgBase0a :: Text
+fgBase0a = fgTrueColour (247, 202, 136)
+bgBase0a :: Text
+bgBase0a = bgTrueColour (247, 202, 136)
 
-fgBase0d :: String
-fgBase0d = strFgTrueColour (124, 175, 194)
-bgBase0d :: String
-bgBase0d = strBgTrueColour (124, 175, 194)
+fgBase0b :: Text
+fgBase0b = fgTrueColour (161, 181, 108)
+bgBase0b :: Text
+bgBase0b = bgTrueColour (161, 181, 108)
 
-fgBase0e :: String
-fgBase0e = strFgTrueColour (186, 139, 175)
-bgBase0e :: String
-bgBase0e = strBgTrueColour (186, 139, 175)
+fgBase0c :: Text
+fgBase0c = fgTrueColour (134, 193, 185)
+bgBase0c :: Text
+bgBase0c = bgTrueColour (134, 193, 185)
 
-fgBase0f :: String
-fgBase0f = strFgTrueColour (161, 105, 70)
-bgBase0f :: String
-bgBase0f = strBgTrueColour (161, 105, 70)
+fgBase0d :: Text
+fgBase0d = fgTrueColour (124, 175, 194)
+bgBase0d :: Text
+bgBase0d = bgTrueColour (124, 175, 194)
+
+fgBase0e :: Text
+fgBase0e = fgTrueColour (186, 139, 175)
+bgBase0e :: Text
+bgBase0e = bgTrueColour (186, 139, 175)
+
+fgBase0f :: Text
+fgBase0f = fgTrueColour (161, 105, 70)
+bgBase0f :: Text
+bgBase0f = bgTrueColour (161, 105, 70)
+
+
+

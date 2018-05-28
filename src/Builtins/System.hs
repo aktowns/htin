@@ -2,6 +2,9 @@ module Builtins.System where
 
 import           Control.Monad.State (lift)
 import           Data.List           (intercalate, isPrefixOf)
+import           Data.Text           (Text)
+import qualified Data.Text           as T
+import qualified Data.Text.IO        as T
 import           Data.Version        (versionBranch)
 import           System.Info
 
@@ -10,11 +13,11 @@ import           Types
 
 data SystemBuiltin = SystemBuiltin deriving (Show)
 
-linuxCPUNames :: IO [String]
+linuxCPUNames :: IO [Text]
 linuxCPUNames = do
-  lines' <- lines <$> readFile "/proc/cpuinfo"
-  pure . map (unwords . drop 3 . words) $
-    filter ("model name" `isPrefixOf`) lines'
+  lines' <- T.lines <$> T.readFile "/proc/cpuinfo"
+  pure . map (T.unwords . drop 3 . T.words) $
+    filter ("model name" `T.isPrefixOf`) lines'
 
 osBuiltinCpuDoc = Just "sys/cpu returns the current cpu name"
 osBuiltinCpu :: Context LVal
@@ -26,19 +29,19 @@ osBuiltinCpuCores = Num . toInteger . length <$> lift linuxCPUNames
 
 osBuiltinDoc = Just "sys/os returns the current operating system"
 osBuiltin :: Context LVal
-osBuiltin = return $ Str os
+osBuiltin = return $ Str (T.pack os)
 
 archBuiltinDoc = Just "sys/arch returns the current architecture"
 archBuiltin :: Context LVal
-archBuiltin = return $ Str arch
+archBuiltin = return $ Str (T.pack arch)
 
 compilerNameBuiltinDoc = Just "sys/compiler returns the current compiler"
 compilerNameBuiltin :: Context LVal
-compilerNameBuiltin = return $ Str compilerName
+compilerNameBuiltin = return $ Str (T.pack compilerName)
 
 compilerVersionBuiltinDoc = Just "sys/compiler-version returns the current compiler version"
 compilerVersionBuiltin :: Context LVal
-compilerVersionBuiltin = return $ Str (intercalate "." $ map show $ versionBranch compilerVersion)
+compilerVersionBuiltin = return $ Str (T.intercalate "." $ map tshow $ versionBranch compilerVersion)
 
 instance Builtin SystemBuiltin where
     initial _ = return ()

@@ -1,6 +1,7 @@
 module Lib where
 
 import           Control.Monad.State   (lift, runStateT)
+import qualified Data.Text             as T
 import           Debug.Trace           (traceM)
 import           Text.Megaparsec       (parse)
 import           Text.Megaparsec.Error (parseErrorPretty')
@@ -29,9 +30,9 @@ evaluateSource filename src =
     case parse Parser.exprs filename src of
         Left err -> do
             lift $ putStrLn $ parseErrorPretty' src err
-            return [Err $ "Failed to parse input " ++ filename]
+            return [Err $ "Failed to parse input " <> T.pack filename]
         Right asts -> do
-            traceM $ show asts
+            lift $ ppp asts
             res <- traverse eval asts
             return $ filter (\x -> x /= SExpr [] && x /= QExpr []) res
 

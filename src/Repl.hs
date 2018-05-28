@@ -5,6 +5,7 @@ import           Control.Monad.State      (lift, runStateT)
 import           Data.IORef
 import           Data.List                (isPrefixOf)
 import qualified Data.Map                 as M
+import qualified Data.Text                as T
 import           System.Console.ANSI
 import           System.Console.Haskeline
 import           System.IO                (hFlush, stdout)
@@ -26,7 +27,7 @@ settings ref = Settings { autoAddHistory = True
 completion :: (MonadIO m) => Completions -> String -> m [Completion]
 completion ref str = do
     compls <- liftIO $ readIORef ref
-    let prefixed = filter (str `isPrefixOf`) (M.keys $ snd compls)
+    let prefixed = filter (str `isPrefixOf`) (map T.unpack $ M.keys $ snd compls)
     return $ map simpleCompletion prefixed
 
 repl :: SymTab -> IO ()
@@ -50,8 +51,8 @@ repl env = do
                         Right ast -> do
                             lift $ cursorUpLine 1
                             lift $ hFlush stdout
-                            outputStrLn $ "\r% " ++ show ast
+                            outputStrLn $ "\r% " ++ T.unpack (pp ast)
                             (val,ne) <- lift $ runStateT (eval ast) env'
-                            outputStrLn $ show val
+                            outputStrLn $ T.unpack (pp val)
                             return ne
                     loop ref newenv

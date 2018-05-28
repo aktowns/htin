@@ -1,69 +1,96 @@
 {-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE OverloadedStrings    #-}
 {-# LANGUAGE RecordWildCards      #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 module Types where
 
-import           Colour.TwentyFourBit
-import           Control.Monad.State  (StateT)
-import           Data.List            (intercalate)
-import qualified Data.Map             as M
-import           Debug.Trace          (traceM)
-import           System.IO            (Handle)
+import           Control.Monad.State    (StateT)
+import           Data.List              (intercalate)
+import qualified Data.Map               as M
+import           Data.Text              (Text)
+import qualified Data.Text              as T
+import qualified Data.Text.IO           as T
+import qualified Data.Text.Lazy.Builder as T
+import           Data.Vector            (Vector)
+import qualified Data.Vector            as V
+import           Debug.Trace            (traceM)
+import           Formatting
+import           System.IO              (Handle)
 
-type SymTab    = (M.Map String LVal, M.Map String LVal)
+import           Colour.TwentyFourBit
+
+type SymTab    = (M.Map Text LVal, M.Map Text LVal)
 type Context a = StateT SymTab IO a
 
 type LBuiltin = LVal -> Context LVal
-instance Show LBuiltin where show _ = "<builtin>"
-instance Eq LBuiltin where x == y = False
-instance Ord LBuiltin where compare _ _ = EQ
 type LBuiltinVar = Context LVal
+
+instance Show LBuiltin where show _ = "<builtin>"
 instance Show LBuiltinVar where show _ = "<builtin var>"
+instance Eq LBuiltin where x == y = False
 instance Eq LBuiltinVar where x == y = False
+instance Ord LBuiltin where compare _ _ = EQ
 instance Ord LBuiltinVar where compare _ _ = EQ
 
 data HHandle = IOHandle Handle
              | NetSocket
              deriving (Eq, Show)
-instance Ord HHandle where
-    compare _ _ = EQ
+instance Ord HHandle where compare _ _ = EQ
 
-data LVal = Err String
-          | Num Integer
-          | Sym String
-          | Str String
-          | Boolean Bool
-          | Hnd HHandle
-          | Builtin { doc :: Maybe String, fn :: LBuiltin }
-          | BuiltinVar { doc :: Maybe String, val :: LBuiltinVar }
-          | Lambda { partialEnv :: [(String, LVal)], doc :: Maybe String, formals :: LVal, body :: LVal }
-          | SExpr [LVal]
-          | QExpr [LVal]
-          deriving (Eq, Ord)
+data LVal = Err        Text
+          | Num        Integer
+          | Sym        Text
+          | Str        Text
+          | Boolean    Bool
+          | Hnd        HHandle
+          | Builtin    { doc :: Maybe Text,  fn :: LBuiltin }
+          | BuiltinVar { doc :: Maybe Text, val :: LBuiltinVar }
+          | Lambda     { partialEnv :: [(Text, LVal)], doc :: Maybe Text, formals :: LVal, body :: LVal }
+          | SExpr      [LVal]
+          | QExpr      [LVal]
+          deriving (Eq, Ord, Show)
 
-showParens o c x = fgBase05 ++ o ++ strTrueColourReset ++ x ++ fgBase05 ++ c ++ strTrueColourReset
+lval :: Format r (LVal -> r)
+lval = shown
 
-showDoc :: Maybe String -> String
-showDoc (Just d) = fgBase0c ++ d ++ strTrueColourReset ++ "\n"
+ppval :: (PrettyPrint a) => Format r (a -> r)
+ppval = later (T.fromText . pp)
+
+tshow :: (Show a) => a -> Text
+tshow = T.pack . show
+
+showParens :: Text -> Text -> Text -> Text
+showParens o c x = withColour fgBase05 o <> x <> withColour fgBase05 c
+
+showDoc :: Maybe Text -> Text
+showDoc (Just d) = withColour fgBase0c $ d <> "\n"
 showDoc _        = ""
 
-instance Show LVal where
-    show (Err msg)   = showParens "(" ")" $ fgBase08 ++ "error " ++ msg ++ strTrueColourReset
-    show (Num i)     = fgBase0d ++ show i ++ strTrueColourReset
-    show (Str s)     = fgBase0b ++ show s ++ strTrueColourReset
-    show (Sym s)     = fgBase09 ++ s ++ strTrueColourReset
-    show (Hnd h)     = fgBase03 ++ show h ++ strTrueColourReset
-    show (Boolean b) = fgBase0e ++ (if b then "#t" else "#f") ++ strTrueColourReset
-    show Builtin{..} = showDoc doc ++ fgBase0a ++ "<builtin>" ++ strTrueColourReset
-    show BuiltinVar{..} = showDoc doc ++ fgBase0a ++ "<builtin var>" ++ strTrueColourReset
-    show (SExpr xs)  = showParens "(" ")" $ unwords $ map show xs
-    show (QExpr xs)  = showParens "{" "}" $ unwords $ map show xs
-    show Lambda{..}  =
-        showDoc doc ++ showParens "(" ")" ((fgBase09 ++ env partialEnv ++ "\\ " ++ strTrueColourReset) ++ show formals ++ " " ++ show body)
+class PrettyPrint a where
+    pp :: a -> Text
+
+    ppp :: a -> IO ()
+    ppp = T.putStrLn . pp
+
+instance (PrettyPrint a) => PrettyPrint [a] where
+    pp a = "[" <> T.intercalate "," (map pp a) <> "]"
+
+instance PrettyPrint LVal where
+    pp (Err msg)      = showParens "(" ")" $ withColour fgBase08 ("error " <> msg)
+    pp (Num i)        = withColour fgBase0d $ tshow i
+    pp (Str s)        = withColour fgBase0b $ tshow s
+    pp (Sym s)        = withColour fgBase09 s
+    pp (Hnd h)        = withColour fgBase03 $ tshow h
+    pp (Boolean b)    = withColour fgBase0e $ if b then "#t" else "#f"
+    pp Builtin{..}    = showDoc doc <> withColour fgBase0a "<builtin>"
+    pp BuiltinVar{..} = showDoc doc <> withColour fgBase0a "<builtin var>"
+    pp (SExpr xs)     = showParens "(" ")" $ T.unwords $ map pp xs
+    pp (QExpr xs)     = showParens "{" "}" $ T.unwords $ map pp xs
+    pp Lambda{..}     = showDoc doc <> showParens "(" ")" (withColour fgBase09 (env partialEnv <> "\\ ") <> pp formals <> " " <> pp body)
         where
-            env :: [(String, LVal)] -> String
+            env :: [(Text, LVal)] -> Text
             env [] = ""
-            env xs = intercalate "," $ map (\(k,v) -> k ++ ":" ++ show v) xs
+            env xs = T.intercalate "," $ map (\(k,v) -> k <> ":" <> pp v) xs
 
 isNum :: LVal -> Bool
 isNum (Num _) = True
@@ -95,5 +122,5 @@ isBuiltinVar _              = False
 
 toSExpr :: LVal -> LVal
 toSExpr (QExpr xs) = SExpr xs
-toSExpr x          = error $ "expected QExpr but got " ++ show x
+toSExpr x          = Err $ sformat ("expected QExpr but got " % lval) x
 

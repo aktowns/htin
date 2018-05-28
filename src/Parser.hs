@@ -1,6 +1,8 @@
 module Parser where
 
 import           Data.Char
+import           Data.Text                  (Text)
+import qualified Data.Text                  as T
 import           Data.Void
 import           Text.Megaparsec
 import           Text.Megaparsec.Char
@@ -46,7 +48,7 @@ integer :: Parser LVal
 integer = Num <$> lexeme L.decimal
 
 stringLit :: Parser LVal
-stringLit = Str <$> lexeme (char '"' >> manyTill p (char '"'))
+stringLit = Str . T.pack <$> lexeme (char '"' >> manyTill p (char '"'))
     where
         p = label "valid char literal" $ do
             notFollowedBy (char '\n')
@@ -66,6 +68,6 @@ usableInitialChars =  ((satisfy (\x -> x /= ';' && isLetter x) <?> "letter")
 usableChars = alphaNumChar <|> usableInitialChars
 
 identifier :: Parser LVal
-identifier = Sym <$> (lexeme . try) p
+identifier = Sym . T.pack <$> (lexeme . try) p
     where
         p = (:) <$> usableInitialChars <*> many usableChars
