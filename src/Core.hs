@@ -48,7 +48,8 @@ call Lambda{..} (SExpr args) = clonedContext $ do
 call err@(Err _) _     = do
     lift $ print err
     return $ SExpr []
-call x _               = error $ "Unhandled call target " ++ show x
+call (QExpr []) a      = error $ "Attempted to call nil with args " ++ show a
+call x a               = return $ Err $ "Unhandled call target " ++ show x ++ " with args " ++ show a
 
 eval :: LVal -> Context LVal
 eval (Sym n) = do

@@ -3,11 +3,14 @@ module Builtins.Core where
 import           Control.Monad.State (lift)
 import           Data.Bifoldable     (bifold)
 import           Data.Foldable       (traverse_)
+import           Text.Megaparsec       (parse)
+import           Text.Megaparsec.Error (parseErrorPretty')
 
 import           Builtins.Builtin
 import           Core                (eval)
 import           Environment         (addSymbol, addSymbolParent,
                                       emptyPartialEnv)
+import qualified Parser
 import           Types
 
 data CoreBuiltin = CoreBuiltin deriving (Show)
@@ -55,6 +58,15 @@ builtinEval (SExpr xs)
     | (QExpr xs') <- head xs = eval $ SExpr xs'
     | otherwise = return $ Err $ "eval handed incorrect arguments, was given: " ++ show xs
 
+builtinLoadDoc = Just "(load path)\nLoads the given file into the current environment"
+builtinLoad :: LVal -> Context LVal 
+builtinLoad (SExpr xs) 
+    | (Str path) <- head xs = do 
+        contents <- lift $ readFile path
+        case parse Parser.exprs path contents of 
+            Left err -> return $ Str "failed"
+            Right x  -> (\_ -> QExpr <$> (traverse eval x)
+
 builtinIfDoc = Just "(if condition truebody falsebody)\nEvaluates the given condition and if #t evalutes truebody otherwise evaluates falsebody"
 builtinIf :: LVal -> Context LVal
 builtinIf (SExpr xs)
@@ -63,11 +75,18 @@ builtinIf (SExpr xs)
     | (Num n)     <- head xs, (QExpr tb) <- xs !! 1, (QExpr fb) <- xs !! 2 = eval $ SExpr $ if n >= 1 then tb else fb
     | otherwise = return $ Err $ "if handed incorrect arguments, was given: " ++ show xs
 
+builtinPrintlnDoc = Just "(println x & xs)\nPrints the given arguments to standard out, ending with a newline"
+builtinPrintln :: LVal -> Context LVal
+builtinPrintln (SExpr xs) = do
+    printed <- traverse printer xs
+    lift $ putStrLn $ bifold (unwords <$> sequence printed)
+    return $ QExpr []
+
 builtinPrintDoc = Just "(print x & xs)\nPrints the given arguments to standard out"
 builtinPrint :: LVal -> Context LVal
 builtinPrint (SExpr xs) = do
     printed <- traverse printer xs
-    lift $ putStrLn $ bifold (unwords <$> sequence printed)
+    lift $ putStr $ bifold (unwords <$> sequence printed)
     return $ QExpr []
 
 builtinShowDoc = Just "(show x & xs)\nShow string representation for hte supplied types"
@@ -83,8 +102,10 @@ builtinShow (SExpr xs) = do
 printer :: LVal -> Context (Either String String)
 printer (Str s)   = return $ Right s
 printer (Num i)   = return $ Right (show i)
+printer (Boolean b) = return $ Right $ if b then "#t" else "#f"
 printer s@(Sym d) = eval s >>= printer
 printer e@(Err _) = return $ Left (show e)
+printer (QExpr xs) = return $ Right $ show xs
 
 builtinErrorDoc = Just "(error str)\nReturns an error with the value str"
 builtinError :: LVal -> Context LVal
@@ -94,10 +115,12 @@ builtinError (SExpr xs)
 
 instance Builtin CoreBuiltin where
     builtins _ = [ ("eval", builtinEvalDoc, builtinEval)
+                 , ("load", builtinLoadDoc, builtinLoad)
                  , ("if", builtinIfDoc, builtinIf)
                  , ("\\", builtinLambdaDoc, builtinLambda)
                  , ("def", builtinDefDoc, builtinDef)
                  , ("=", builtinAssDoc, builtinAss)
+                 , ("println", builtinPrintlnDoc, builtinPrintln)
                  , ("print", builtinPrintDoc, builtinPrint)
                  , ("show", builtinShowDoc, builtinShow)
                  , ("error", builtinErrorDoc, builtinError)
