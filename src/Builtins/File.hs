@@ -41,17 +41,17 @@ fileOpenDoc = Just "(file/open path mode)\n\
                    \Opens the given path in mode returning a handle"
 fileOpen :: LVal -> Context LVal
 fileOpen (SExpr xs)
-    | length xs /= 2 = return $ Err "file/open requires 2 arguments, filepath and filemode"
-    | (Str file) <- head xs, (Num mode) <- xs !! 1, (Just hmode) <- lookupMode mode = do
-        handle <- lift $ openFile (T.unpack file) hmode
-        return $ Hnd $ IOHandle handle
-    | otherwise = return $ Err $ "file/open handed incorrect arguments expected filepath and filemode, got" <> tshow xs
+  | length xs /= 2 = return $ Err "file/open requires 2 arguments, filepath and filemode"
+  | (Str file) <- head xs, (Num mode) <- xs !! 1, (Just hmode) <- lookupMode mode = do
+    handle <- lift $ openFile (T.unpack file) hmode
+    return $ Hnd $ IOHandle handle
+  | otherwise = return $ Err $ "file/open handed incorrect arguments expected filepath and filemode, got" <> tshow xs
 
 withHandle :: Text -> (Handle -> Context LVal) -> LVal -> Context LVal
 withHandle fn ctx (SExpr xs)
-    | length xs /= 1 = return $ Err $ fn <> " requires 1 argument filehandle"
-    | (Hnd (IOHandle fh)) <- head xs = ctx fh
-    | otherwise = return $ Err $ fn <> "handed incorrect arguments expected filepath and filemode, got" <> tshow xs
+  | length xs /= 1 = return $ Err $ fn <> " requires 1 argument filehandle"
+  | (Hnd (IOHandle fh)) <- head xs = ctx fh
+  | otherwise = return $ Err $ fn <> "handed incorrect arguments expected filepath and filemode, got" <> tshow xs
 
 fileReadDoc = Just "(file/read handle)\n\
                    \Reads all contents of the given handle returning a string"
@@ -62,8 +62,8 @@ fileReadCharDoc = Just "(file/read-char handle)\n\
                        \Reads a character from the handle at its current position"
 fileReadChar :: LVal -> Context LVal
 fileReadChar = withHandle "file/read-char" $ \fh -> do
-    char <- lift $ hGetChar fh
-    return $ Str (T.singleton char)
+  char <- lift $ hGetChar fh
+  return $ Str (T.singleton char)
 
 fileReadLineDoc = Just "(file/read-line handle)\n\
                        \Reads a line from the handle at its current position"
@@ -85,8 +85,8 @@ fileFlushDoc = Just "(file/flush handle)\n\
                     \immediately to the operating system."
 fileFlush :: LVal -> Context LVal
 fileFlush = withHandle "file/flush" $ \fh -> do
-    line <- lift $ hFlush fh
-    return $ QExpr []
+  line <- lift $ hFlush fh
+  return $ QExpr []
 
 fileTellDoc = Just "(file/tell handle)\n\
                    \Gives the current position in the file"
@@ -138,30 +138,47 @@ fileIsEofDoc = Just "(file/is-eof handle)\n\
 fileIsEof :: LVal -> Context LVal
 fileIsEof = withHandle "file/is-eof" $ \fh -> Boolean <$> (lift $ hIsEOF fh)
 
+fileSizeDoc = Just "(file/size handle)\n\
+                    \Returns the size of associated file in 8-bit bytes."
+fileSize :: LVal -> Context LVal
+fileSize = withHandle "file/size" $ \fh -> Num <$> (lift $ hFileSize fh)
+
+fileSetSizeDoc = Just "(file/set-size handle size)\n\
+                      \Truncates the physical file with handle to size bytes."
+fileSetSize :: LVal -> Context LVal
+fileSetSize (SExpr xs)
+  | length xs /= 2 = return $ Err "file/set-size requires 2 arguments, filehandle and size"
+  | (Hnd (IOHandle fh)) <- head xs, (Num sz) <- xs !! 1 = do
+      lift $ hSetFileSize fh sz
+      return $ QExpr []
+  | otherwise = return $ Err $ "file/set-size handed incorrect arguments expected filehandle and size, got" <> tshow xs
+
 fileCloseDoc = Just "(file/close handle)\n\
                     \Closes the given handle, does nothing if handle is already \
                     \closed. returns nil"
 fileClose :: LVal -> Context LVal
 fileClose = withHandle "file/close" $ \fh -> do
-    lift $ hClose fh
-    return $ QExpr []
+  lift $ hClose fh
+  return $ QExpr []
 
 instance Builtin FileBuiltin where
-    builtins _ = [ ("file/open",        fileOpenDoc,       fileOpen)
-                 , ("file/read",        fileReadDoc,       fileRead)
-                 , ("file/read-line",   fileReadLineDoc,   fileReadLine)
-                 , ("file/read-char",   fileReadCharDoc,   fileReadChar)
-                 , ("file/write",       fileWriteDoc,      fileWrite)
-                 , ("file/flush",       fileFlushDoc,      fileFlush)
-                 , ("file/tell",        fileTellDoc,       fileTell)
-                 , ("file/seek",        fileSeekDoc,       fileSeek)
-                 , ("file/is-open",     fileIsOpenDoc,     fileIsOpen)
-                 , ("file/is-closed",   fileIsClosedDoc,   fileIsClosed)
-                 , ("file/is-readable", fileIsReadableDoc, fileIsReadable)
-                 , ("file/is-writable", fileIsWritableDoc, fileIsWritable)
-                 , ("file/is-seekable", fileIsSeekableDoc, fileIsSeekable)
-                 , ("file/is-eof",      fileIsEofDoc,      fileIsEof)
-                 , ("file/close",       fileCloseDoc,      fileClose)
-                 ]
-    globals _ = []
-    initial _ = fileMode >> fileSeekMode
+  builtins _ = [ ("file/open",        fileOpenDoc,       fileOpen)
+               , ("file/read",        fileReadDoc,       fileRead)
+               , ("file/read-line",   fileReadLineDoc,   fileReadLine)
+               , ("file/read-char",   fileReadCharDoc,   fileReadChar)
+               , ("file/write",       fileWriteDoc,      fileWrite)
+               , ("file/flush",       fileFlushDoc,      fileFlush)
+               , ("file/tell",        fileTellDoc,       fileTell)
+               , ("file/seek",        fileSeekDoc,       fileSeek)
+               , ("file/size",        fileSizeDoc,       fileSize)
+               , ("file/set-size",    fileSetSizeDoc,    fileSetSize)
+               , ("file/is-open",     fileIsOpenDoc,     fileIsOpen)
+               , ("file/is-closed",   fileIsClosedDoc,   fileIsClosed)
+               , ("file/is-readable", fileIsReadableDoc, fileIsReadable)
+               , ("file/is-writable", fileIsWritableDoc, fileIsWritable)
+               , ("file/is-seekable", fileIsSeekableDoc, fileIsSeekable)
+               , ("file/is-eof",      fileIsEofDoc,      fileIsEof)
+               , ("file/close",       fileCloseDoc,      fileClose)
+               ]
+  globals _ = []
+  initial _ = fileMode >> fileSeekMode
