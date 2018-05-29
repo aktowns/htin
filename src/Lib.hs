@@ -35,7 +35,8 @@ evaluateSource filename src =
         Right asts -> do
             lift $ ppp asts
             res <- traverse eval asts
-            return $ filter (\x -> x /= SExpr [] && x /= QExpr []) res
+            let filtered = filter isErr res
+            return $ filter (\x -> x /= SExpr [] && x /= QExpr []) filtered
 
 someFunc :: IO ()
 someFunc = do

@@ -32,7 +32,7 @@ builtinTail (SExpr xs)
 builtinJoinDoc = Just "(join & xs)\nReturns the concatenation of all supplied lists"
 builtinJoin :: LVal -> Context LVal
 builtinJoin (SExpr xs)
-    | (QExpr _) <- head xs = return $ QExpr $ foldl (\acc (QExpr xs') -> acc ++ xs') [] xs
+    | (QExpr _) <- head xs = return $ QExpr $ foldl (\acc (QExpr xs') -> acc <> xs') [] xs
     | (Str _) <- head xs   = return $ Str $ foldl (\acc (Str xs') -> acc <> xs') T.empty xs
     | otherwise            = return $ Err $ "join called with wrong arguments, got " <> tshow xs
 
