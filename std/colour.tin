@@ -1,0 +1,8 @@
+(fun {rgb-text r g b} "(rgb-text r g b)\n24bit rgb terminal text" {
+    join "\x1B[38;2;" (show r) ";" (show g) ";" (show b) "m"
+})
+
+(def {rgb-reset} "\x1B[0m")
+
+(fun {with-colour r g b t} "show t with the supplied rgb colour" {
+    join (rgb-text r g b) t (rgb-reset)})

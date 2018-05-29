@@ -1,0 +1,11 @@
+(load "colour.tin")
+
+(do
+  (= {fh} (file/open "banner.txt" file/mode-read))
+  (println (with-colour 100 150 255 (file/read fh)))
+  (= {str-version} (map show version))
+  (= {started-on} (join "session started on: " (datetime/current)))
+  (= {host-info} (join "Your host is running " (sys/os) "/" (sys/arch) " and was compiled with " (sys/compiler) " " (sys/compiler-version)))
+  (println "Version:" (join (fst str-version) "." (snd str-version) "." (trd str-version) " \"Nakatomi Plaza\" " started-on))
+  (println host-info)
+  (file/close fh))

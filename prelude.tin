@@ -35,32 +35,6 @@
 })
 
 (load-verbose "test.tin")
+(load-verbose "tests/sanity.tin")
 
-(describe "sanity tests"
-  {it "checks variable equivalence" { do
-    (should #t #t)
-  }}
-  {it "checks assignment" { do
-    (= {x} #t)
-    (should x #t)
-  }}
-  {it "checks re-assignment" { do 
-    (= {x} #f)
-    (= {x} #t)
-    (should x #t)
-  }}
-  {it "checks function calling" { do 
-    (should 2 (+ 1 1))
-  }}
-)
-
-(do 
-  (= {fh} (file/open "banner.txt" file/mode-read))
-  (println (file/read fh))
-  (= {str-version} (map show version))
-  (= {started-on} (join "session started on: " (datetime/current)))
-  (= {host-info} (join "Your host is running " (sys/os) "/" (sys/arch) " and was compiled with " (sys/compiler) " " (sys/compiler-version)))
-  (println "Version:" (join (fst str-version) "." (snd str-version) "." (trd str-version) " \"Nakatomi Plaza\" " started-on))
-  (println host-info)
-  (file/close fh))
- 
+(load-verbose "showbanner.tin")

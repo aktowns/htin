@@ -1,3 +1,5 @@
+(load "colour.tin")
+
 (fun {assert l r msg} "(assert l r msg)\nAssert that the left side is equal to the right, if it isn't print the msg" {
   if (== l r) 
     {#t}
@@ -15,10 +17,9 @@
 
 (fun {it name & body} "run a unit of a test a case" {
   do 
-    (print (join "  " name ":"))
+    (print (join "  " name))
     (map (\ {test} { do
-      (if (eval (eval body)) {print " passed"} {print " failed"})
-      ;(map (\ {part} {if (part) {print " passed "} {print " failed "}}) test)
+      (if (eval (eval body)) {print (with-colour 0 255 0 " ✓")} {print (with-colour 255 0 0 " ✗")})
       (println "")
     }) body)
     nil

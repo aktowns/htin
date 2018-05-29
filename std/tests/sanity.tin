@@ -1,0 +1,17 @@
+(describe "sanity tests"
+  {it "checks variable equivalence" { do
+    (should #t #t)
+  }}
+  {it "checks assignment" { do
+    (= {x} #t)
+    (should x #t)
+  }}
+  {it "checks re-assignment" { do
+    (= {x} #f)
+    (= {x} #t)
+    (should x #t)
+  }}
+  {it "checks function calling" { do
+    (should 2 (+ 1 1))
+  }}
+)
