@@ -55,7 +55,7 @@
 )
 
 (do 
-  (= {fh} (file/open "banner.txt" file/read-mode))
+  (= {fh} (file/open "banner.txt" file/mode-read))
   (println (file/read fh))
   (= {str-version} (map show version))
   (= {started-on} (join "session started on: " (datetime/current)))
