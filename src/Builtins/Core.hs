@@ -4,6 +4,7 @@ import           Control.Monad         (when)
 import           Control.Monad.State   (lift)
 import           Data.Bifoldable       (bifold)
 import           Data.Foldable         (traverse_)
+import Data.Monoid((<>))
 import           Data.Text             (Text)
 import qualified Data.Text             as T
 import qualified Data.Text.IO          as T
@@ -86,20 +87,23 @@ builtinLoad :: Bool -> LVal -> Context LVal
 builtinLoad verbose (SExpr xs)
     | (Str path) <- head xs = do
         searchDirs <- lift searchPaths
-        Just file <- lift $ searchForFile (T.unpack path) searchDirs
-        lift $ when verbose $ putStrLn $ "loading file " ++ file
-        contents <- lift $ readFile file
-        case parse Parser.exprs (T.unpack path) contents of
-            Left err -> do
-                lift $ putStrLn (parseErrorPretty' contents err)
-                return $ Boolean False
-            Right x  -> do
-                evald <- traverse eval x
-                let errors = filter isErr evald
-                if null errors then return $ Boolean True
-                else do
-                    lift $ ppp errors
+        maybeFile <- lift $ searchForFile (T.unpack path) searchDirs
+        case maybeFile of
+          Nothing -> return $ Boolean False
+          Just file -> do
+            lift $ when verbose $ putStrLn $ "loading file " ++ file
+            contents <- lift $ readFile file
+            case parse Parser.exprs (T.unpack path) contents of
+                Left err -> do
+                    lift $ putStrLn (parseErrorPretty' contents err)
                     return $ Boolean False
+                Right x  -> do
+                    evald <- traverse eval x
+                    let errors = filter isErr evald
+                    if null errors then return $ Boolean True
+                    else do
+                        lift $ ppp errors
+                        return $ Boolean False
 
 builtinIfDoc = Just "(if condition truebody falsebody)\nEvaluates the given condition and if #t evalutes truebody otherwise evaluates falsebody"
 builtinIf :: LVal -> Context LVal
