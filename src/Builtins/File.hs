@@ -3,6 +3,7 @@ module Builtins.File where
 import           Control.Monad.State (lift)
 import           Data.Foldable       (traverse_)
 import           Data.List           (find)
+import           Data.Monoid         ((<>))
 import           Data.Text           (Text)
 import qualified Data.Text           as T
 import qualified Data.Text.IO        as T

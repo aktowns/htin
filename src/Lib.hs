@@ -1,6 +1,7 @@
 module Lib where
 
 import           Control.Monad.State   (lift, runStateT)
+import           Data.Monoid           ((<>))
 import qualified Data.Text             as T
 import           Debug.Trace           (traceM)
 import           Text.Megaparsec       (parse)

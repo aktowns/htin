@@ -6,6 +6,7 @@ module Types where
 import           Control.Monad.State    (StateT)
 import           Data.List              (intercalate)
 import qualified Data.Map               as M
+import           Data.Monoid            ((<>))
 import           Data.Text              (Text)
 import qualified Data.Text              as T
 import qualified Data.Text.IO           as T

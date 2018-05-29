@@ -8,10 +8,10 @@ module Colour.TwentyFourBit( fgBase00, bgBase00, fgBase01, bgBase01, fgBase02, b
                              withColour
                             ) where
 
-import           Data.Text (Text)
-import qualified Data.Text as Text
-
-import           Data.Word (Word8)
+import           Data.Monoid ((<>))
+import           Data.Text   (Text)
+import qualified Data.Text   as Text
+import           Data.Word   (Word8)
 
 tshow :: (Show a) => a -> Text
 tshow = Text.pack . show
