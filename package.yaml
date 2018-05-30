@@ -49,10 +49,11 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     - -Wall 
-    - -fwarn-tabs
     - -Wincomplete-uni-patterns 
     - -Wincomplete-record-updates 
     - -Wmissing-import-lists
+    - -fwarn-unused-imports
+    - -fwarn-tabs
     dependencies:
     - htin
 

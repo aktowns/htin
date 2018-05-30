@@ -20,6 +20,7 @@ import           Colour.TwentyFourBit
 import           Core
 import           Environment
 import qualified Parser
+import           PrettyPrint
 import           Repl
 import           Types
 

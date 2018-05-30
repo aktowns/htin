@@ -14,6 +14,7 @@ import           Text.Megaparsec.Error    (parseErrorPretty')
 
 import           Core
 import qualified Parser
+import           PrettyPrint
 import           Types
 
 type Completions = IORef SymTab

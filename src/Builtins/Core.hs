@@ -4,7 +4,7 @@ import           Control.Monad         (when)
 import           Control.Monad.State   (lift)
 import           Data.Bifoldable       (bifold)
 import           Data.Foldable         (traverse_)
-import Data.Monoid((<>))
+import           Data.Monoid           ((<>))
 import           Data.Text             (Text)
 import qualified Data.Text             as T
 import qualified Data.Text.IO          as T
@@ -16,9 +16,9 @@ import           Text.Megaparsec.Error (parseErrorPretty')
 
 import           Builtins.Builtin
 import           Core                  (eval)
-import           Environment           (addSymbol, addSymbolParent,
-                                        emptyPartialEnv)
+import           Environment           (addSymbol, addSymbolParent, emptyPartialEnv)
 import qualified Parser
+import           PrettyPrint
 import           Types
 
 data CoreBuiltin = CoreBuiltin deriving (Show)
