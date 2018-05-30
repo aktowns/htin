@@ -15,14 +15,27 @@
     (map eval body)
 })
 
-(fun {it name & body} "run a unit of a test a case" {
+(fun {it name & body} "run a unit of a test case" {
   do 
-    (print (join "  " name))
-    (map (\ {test} { do
-      (if (eval (eval body)) {print (with-colour 0 255 0 " ✓")} {print (with-colour 255 0 0 " ✗")})
-      (println "")
-    }) body)
-    nil
+    (print (join " " name))
+    (if (last body) {print (with-colour 0 255 0 " ✓")} {print (with-colour 255 0 0 " ✗")})
+    (println "")
 })
 
-(fun {should l r} "should l be r" {== l r})
+; (fun {it name & body} "run a unit of a test case" {
+;   do 
+;     (print (join "  " name))
+;     (map (\ {test} { do
+;       (if (eval (eval body)) {print (with-colour 0 255 0 " ✓")} {print (with-colour 255 0 0 " ✗")})
+;       (println "")
+;     }) body)
+;     nil
+; })
+
+(fun {should l r} "should l be r" { do
+  (= {res} (== l r))
+  (if res {res} { do
+    (print (join "value " (show l) " does not equal " (show r)))
+    res
+  })
+})
