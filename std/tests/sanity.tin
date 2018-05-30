@@ -13,4 +13,12 @@
     (= {add-10} (add 10)) 
     (should (add-10 20) 30)
   }
+  { it "can throw and catch errors" 
+    (= {res} (catch {eval (error "ohh nooo")} (\ {err} {#t})))
+    (should res #t)
+  }
+  { it "returns body if no errors were thrown"
+    (= {res} (catch {#t} (\ {err} {#f})))
+    (should res #t)
+  }
 )
