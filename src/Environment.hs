@@ -9,24 +9,22 @@ import           Formatting
 
 import           Types
 
-envLookup :: Text -> Context LVal
+envLookup :: Text -> Context (Maybe LVal)
 envLookup x = do
     (symtab, partab) <- get
     case (M.lookup x symtab, M.lookup x partab) of
-        (Just v, _) -> return v -- prefer symtab
-        (_, Just v) -> return v
-        _           -> return $ Err $ sformat ("undefined variable " % stext) x
+        (Just v, _) -> return $ Just v -- prefer symtab
+        (_, Just v) -> return $ Just v
+        _           -> return $ Nothing
 
 addSymbol :: Text -> LVal -> Context ()
 addSymbol x val = do
-    -- traceM $ "Inserting " ++ x ++ " into local environment"
     (symtab, partab) <- get
     put (M.insert x val symtab, partab)
     return ()
 
 addSymbolParent :: Text -> LVal -> Context ()
 addSymbolParent x val = do
-    --traceM $ "Inserting " ++ x ++ " into global environment"
     (symtab, partab) <- get
     put (symtab, M.insert x val partab)
     return ()

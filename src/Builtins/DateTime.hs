@@ -1,6 +1,6 @@
 module Builtins.DateTime where
 
-import           Control.Monad.State (lift)
+import           Control.Monad.IO.Class (liftIO)
 import           Data.Time.LocalTime
 
 import           Builtins.Builtin
@@ -10,7 +10,7 @@ data DateTimeBuiltin = DateTimeBuiltin deriving (Show)
 
 currentDateTimeBuiltinDoc = Just "datetime/current shows the current zoned datetime"
 currentDateTimeBuiltin :: Context LVal
-currentDateTimeBuiltin = lift $ Str . tshow <$> getZonedTime
+currentDateTimeBuiltin = liftIO $ (Str builtinPos) . tshow <$> getZonedTime
 
 instance Builtin DateTimeBuiltin where
     builtins _ = []

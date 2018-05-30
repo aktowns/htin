@@ -32,33 +32,48 @@ qparens :: Parser a -> Parser a
 qparens = between (symbol "{") (symbol "}")
 
 boolLit :: Parser LVal
-boolLit = Boolean <$> (const True <$> symbol "#t" <|> const False <$> symbol "#f")
+boolLit = do
+    p <- getPosition
+    b <- (const True <$> symbol "#t" <|> const False <$> symbol "#f")
+    return $ Boolean p b
 
 --comment :: Parser ()
 --comment = const () <$> (char ';' >> many L.charLiteral >> char '\n')
 comment = lexeme (L.skipLineComment ";") <?> "comment"
 
 expr :: Parser LVal
-expr = skipMany comment >> (integer <|> stringLit <|> boolLit <|> sexpr <|> qexpr <|> identifier)
+expr = skipMany comment >> (integer <|> stringLit <|> boolLit <|> psexpr <|> pqexpr <|> identifier)
 
 exprs :: Parser [LVal]
 exprs = many expr
 
 integer :: Parser LVal
-integer = Num <$> lexeme L.decimal
+integer = do
+    p <- getPosition
+    i <- lexeme L.decimal
+    return $ Num p i
 
 stringLit :: Parser LVal
-stringLit = Str . T.pack <$> lexeme (char '"' >> manyTill p (char '"'))
+stringLit = do
+    p <- getPosition
+    s <- lexeme (char '"' >> manyTill pa (char '"'))
+    return $ Str p $ T.pack s
     where
-        p = label "valid char literal" $ do
+        pa = label "valid char literal" $ do
             notFollowedBy (char '\n')
             L.charLiteral
 
-sexpr :: Parser LVal
-sexpr = SExpr <$> parens (many expr)
+psexpr :: Parser LVal
+psexpr = do
+    p <- getPosition
+    s <- parens (many expr)
+    return $ SExpr p s
 
-qexpr :: Parser LVal
-qexpr = QExpr <$> qparens (many expr)
+pqexpr :: Parser LVal
+pqexpr = do
+    p <- getPosition
+    q <- qparens (many expr)
+    return $ QExpr p q
 
 usableInitialChars =  ((satisfy (\x -> x /= ';' && isLetter x) <?> "letter")
                   <|> (satisfy (\x -> x /= ';' && isSymbol x) <?> "symbol")
@@ -68,6 +83,9 @@ usableInitialChars =  ((satisfy (\x -> x /= ';' && isLetter x) <?> "letter")
 usableChars = alphaNumChar <|> usableInitialChars
 
 identifier :: Parser LVal
-identifier = Sym . T.pack <$> (lexeme . try) p
+identifier = do
+    p <- getPosition
+    s <- (lexeme . try) pa
+    return $ Sym p $ T.pack s
     where
-        p = (:) <$> usableInitialChars <*> many usableChars
+        pa = (:) <$> usableInitialChars <*> many usableChars

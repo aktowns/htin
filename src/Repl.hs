@@ -1,7 +1,8 @@
 module Repl where
 
+import           Control.Monad.Except     (runExceptT)
 import           Control.Monad.IO.Class   (MonadIO, liftIO)
-import           Control.Monad.State      (lift, runStateT)
+import           Control.Monad.State      (runStateT)
 import           Data.IORef
 import           Data.List                (isPrefixOf)
 import qualified Data.Map                 as M
@@ -38,7 +39,7 @@ repl env = do
     where
         loop :: Completions -> SymTab -> InputT IO ()
         loop ref env' = do
-            lift $ modifyIORef ref (const env')
+            liftIO $ modifyIORef ref (const env')
             minput <- handle (\Interrupt -> return $ Just "interrupted") $ getInputLine "% "
             case minput of
                 Nothing     -> return ()
@@ -50,10 +51,16 @@ repl env = do
                             outputStrLn $ parseErrorPretty' input err
                             return env'
                         Right ast -> do
-                            lift $ cursorUpLine 1
-                            lift $ hFlush stdout
+                            liftIO $ cursorUpLine 1
+                            liftIO $ hFlush stdout
                             outputStrLn $ "\r% " ++ T.unpack (pp ast)
-                            (val,ne) <- lift $ runStateT (eval ast) env'
-                            outputStrLn $ T.unpack (pp val)
-                            return ne
+                            res <- liftIO $ runExceptT $ runStateT (eval ast) env'
+                            case res of
+                                Left (RuntimeException rte) -> do
+                                    err <- liftIO $ printPrettyError' rte
+                                    outputStr $ T.unpack err
+                                    return env'
+                                Right (val, ne) -> do
+                                    outputStrLn $ T.unpack (pp val)
+                                    return ne
                     loop ref newenv

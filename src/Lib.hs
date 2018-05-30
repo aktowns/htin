@@ -1,21 +1,23 @@
 module Lib where
 
-import           Control.Monad.State   (lift, runStateT)
-import           Data.Monoid           ((<>))
-import qualified Data.Text             as T
-import           Debug.Trace           (traceM)
-import           Text.Megaparsec       (parse)
-import           Text.Megaparsec.Error (parseErrorPretty')
+import           Control.Monad.Except   (runExceptT)
+import           Control.Monad.IO.Class (liftIO)
+import           Control.Monad.State    (runStateT)
+import           Data.Monoid            ((<>))
+import qualified Data.Text              as T
+import           Debug.Trace            (traceM)
+import           Text.Megaparsec        (parse)
+import           Text.Megaparsec.Error  (parseErrorPretty')
 
-import           Builtins.Builtin      (addBuiltins)
-import           Builtins.Core         (CoreBuiltin (..))
-import           Builtins.DateTime     (DateTimeBuiltin (..))
-import           Builtins.Env          (EnvBuiltin (..))
-import           Builtins.Equality     (EqualityBuiltin (..))
-import           Builtins.File         (FileBuiltin (..))
-import           Builtins.List         (ListBuiltin (..))
-import           Builtins.Math         (MathBuiltin (..))
-import           Builtins.System       (SystemBuiltin (..))
+import           Builtins.Builtin       (addBuiltins)
+import           Builtins.Core          (CoreBuiltin (..))
+import           Builtins.DateTime      (DateTimeBuiltin (..))
+import           Builtins.Env           (EnvBuiltin (..))
+import           Builtins.Equality      (EqualityBuiltin (..))
+import           Builtins.File          (FileBuiltin (..))
+import           Builtins.List          (ListBuiltin (..))
+import           Builtins.Math          (MathBuiltin (..))
+import           Builtins.System        (SystemBuiltin (..))
 import           Colour.TwentyFourBit
 import           Core
 import           Environment
@@ -24,25 +26,25 @@ import           PrettyPrint
 import           Repl
 import           Types
 
-runIt :: SymTab -> Context a -> IO (a, SymTab)
-runIt initialEnv fn = runStateT fn initialEnv
+runIt :: SymTab -> Context a -> IO (Either RuntimeException (a, SymTab))
+runIt initialEnv fn = runExceptT $ runStateT fn initialEnv
 
 evaluateSource :: String -> String -> Context [LVal]
 evaluateSource filename src =
     case parse Parser.exprs filename src of
-        Left err -> do
-            lift $ putStrLn $ parseErrorPretty' src err
-            return [Err $ "Failed to parse input " <> T.pack filename]
+        Left error -> do
+            liftIO $ putStrLn $ parseErrorPretty' src error
+            return [Boolean builtinPos False]
         Right asts -> do
-            lift $ ppp asts
+            liftIO $ ppp asts
             res <- traverse eval asts
             let filtered = filter isErr res
-            return $ filter (\x -> x /= SExpr [] && x /= QExpr []) filtered
+            return filtered
 
 someFunc :: IO ()
 someFunc = do
     prelude <- readFile "prelude.tin"
-    (r, env) <- runIt emptyEnv $ do
+    res <- runIt emptyEnv $ do
           addBuiltins CoreBuiltin
           addBuiltins ListBuiltin
           addBuiltins MathBuiltin
@@ -52,5 +54,8 @@ someFunc = do
           addBuiltins EnvBuiltin
           addBuiltins SystemBuiltin
           evaluateSource "prelude.tin" prelude
-    if null r then putStrLn "" else print r
-    repl env
+    case res of
+        Left (RuntimeException errar) -> do
+            putStrLn $ "(FATAL) Runtime Exception in prelude load: "
+            printPrettyError errar
+        Right (r, env) -> repl env

@@ -1,11 +1,11 @@
 module Builtins.System where
 
-import           Control.Monad.State (lift)
-import           Data.List           (intercalate, isPrefixOf)
-import           Data.Text           (Text)
-import qualified Data.Text           as T
-import qualified Data.Text.IO        as T
-import           Data.Version        (versionBranch)
+import           Control.Monad.IO.Class (liftIO)
+import           Data.List              (intercalate, isPrefixOf)
+import           Data.Text              (Text)
+import qualified Data.Text              as T
+import qualified Data.Text.IO           as T
+import           Data.Version           (versionBranch)
 import           System.Info
 
 import           Builtins.Builtin
@@ -21,27 +21,27 @@ linuxCPUNames = do
 
 osBuiltinCpuDoc = Just "sys/cpu returns the current cpu name"
 osBuiltinCpu :: Context LVal
-osBuiltinCpu = Str . head <$> lift linuxCPUNames
+osBuiltinCpu = (Str builtinPos) . head <$> liftIO linuxCPUNames
 
 osbuiltinCpuCoresDoc = Just "sys/cpu-cores returns the number of cores"
 osBuiltinCpuCores :: Context LVal
-osBuiltinCpuCores = Num . toInteger . length <$> lift linuxCPUNames
+osBuiltinCpuCores = (Num builtinPos) . toInteger . length <$> liftIO linuxCPUNames
 
 osBuiltinDoc = Just "sys/os returns the current operating system"
 osBuiltin :: Context LVal
-osBuiltin = return $ Str (T.pack os)
+osBuiltin = return $ Str builtinPos (T.pack os)
 
 archBuiltinDoc = Just "sys/arch returns the current architecture"
 archBuiltin :: Context LVal
-archBuiltin = return $ Str (T.pack arch)
+archBuiltin = return $ Str builtinPos (T.pack arch)
 
 compilerNameBuiltinDoc = Just "sys/compiler returns the current compiler"
 compilerNameBuiltin :: Context LVal
-compilerNameBuiltin = return $ Str (T.pack compilerName)
+compilerNameBuiltin = return $ Str builtinPos (T.pack compilerName)
 
 compilerVersionBuiltinDoc = Just "sys/compiler-version returns the current compiler version"
 compilerVersionBuiltin :: Context LVal
-compilerVersionBuiltin = return $ Str (T.intercalate "." $ map tshow $ versionBranch compilerVersion)
+compilerVersionBuiltin = return $ Str builtinPos (T.intercalate "." $ map tshow $ versionBranch compilerVersion)
 
 instance Builtin SystemBuiltin where
     initial _ = return ()
