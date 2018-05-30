@@ -33,8 +33,11 @@ builtinJoinDoc = Just "(join & xs)\nReturns the concatenation of all supplied li
 builtinJoin :: LVal -> Context LVal
 builtinJoin (SExpr xs)
     | (QExpr _) <- head xs = return $ QExpr $ foldl (\acc (QExpr xs') -> acc <> xs') [] xs
-    | (Str _) <- head xs   = return $ Str $ foldl (\acc (Str xs') -> acc <> xs') T.empty xs
+    | (Str _) <- head xs   =
+        if all isStr xs then return $ Str $ foldl (\acc (Str xs') -> acc <> xs') T.empty xs
+        else return $ Err $ "join needs either a QExpr of different types or be all strings, was given " <> (tshow xs)
     | otherwise            = return $ Err $ "join called with wrong arguments, got " <> tshow xs
+builtinJoin x = error $ "internal error: builtinJoin called with argument " ++ show x
 
 instance Builtin ListBuiltin where
     builtins _ = [ ("list", builtinListDoc, builtinList)
