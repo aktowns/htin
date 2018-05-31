@@ -1,6 +1,8 @@
 # Socks
 Socks is a toy s-expression language written in haskell. 
 
+![docs/replscreen.png](docs/replscreen.png)
+
 ## Examples
 
 ### Higher order functions
