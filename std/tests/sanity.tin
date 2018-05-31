@@ -1,24 +1,24 @@
 (describe "sanity tests"
-  { it "checks variable equivalence" (should #t #t) }
-  { it "checks assignment" (= {x} #t) (should x #t) }
-  { it "checks re-assignment" (= {x} #f) (= {x} #t) (should x #t) }
-  { it "checks function calling" (should (+ 1 1) 2) }
+  { it "checks variable equivalence" (expect #t (to-eq #t)) }
+  { it "checks assignment" (= {x} #t) (expect x (to-eq #t)) }
+  { it "checks re-assignment" (= {x} #f) (= {x} #t) (expect x (to-eq #t)) }
+  { it "checks function calling" (expect (+ 1 1) (to-eq 2)) }
   { it "has higher order functions" 
     (= {adder} (\ {x} {+ x 100}))
     (= {result} (map adder {1 2 3 4 5}))
-    (should result {101 102 103 104 105})
+    (expect result (to-eq {101 102 103 104 105}))
   }
   { it "has partial function application"
     (= {add} (\ {x y} {+ x y}))
-    (= {add-10} (add 10)) 
-    (should (add-10 20) 30)
+    (= {add-10} (add 10))
+    (expect (add-10 20) (to-eq 30))
   }
   { it "can throw and catch errors" 
     (= {res} (catch {eval (error "ohh nooo")} (\ {err} {#t})))
-    (should res #t)
+    (expect res (to-eq #t))
   }
   { it "returns body if no errors were thrown"
     (= {res} (catch {#t} (\ {err} {#f})))
-    (should res #t)
+    (expect res (to-eq #t))
   }
 )

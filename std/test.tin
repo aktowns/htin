@@ -32,7 +32,9 @@
 ;     nil
 ; })
 
-(fun {should l r} "should l be r" { do
+(fun {to-eq r} "to equal" {r})
+
+(fun {expect l r} "should l be r" { do
   (= {res} (== l r))
   (if res {res} { do
     (print (join "value " (show l) " does not equal " (show r)))
