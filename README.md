@@ -3,6 +3,17 @@ Socks is a toy s-expression language written in haskell.
 
 ![docs/replscreen.png](docs/replscreen.png)
 
+## Features
+Most methods should have builtin documentation, from the repl you can see this by typing the method name
+
+```clojure
+% map
+(map f l)
+Apply the given function f to the items in list l returning the resulting list
+(\ {f l} {if (== l nil) {nil} {join (list (f (fst l))) (map f (tail l))}})
+% 
+```
+
 ## Examples
 
 ### Higher order functions
