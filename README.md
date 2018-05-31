@@ -5,9 +5,28 @@ Socks is a toy s-expression language written in haskell.
 
 ### Higher order functions
 
+```clojure
+(= {adder} (\ {x} (+ x 10)))
+(map adder {1 2 3 4 5}) 
+; {11 12 13 14 15}
+```
+
 ### Exception handling
 
+```clojure
+(catch {eval (error "ohh nooo")} (\ {err} {println (join "an error happened! " (show err))})) 
+; an error happened! ohh nooo
+```
+
 ### Currying
+
+```clojure
+(\ {x y} {+ x y})
+(= {add} (\ {x y} {+ x y}))
+(= {add-10} (add 10))
+(add-10 90)
+; 100
+```
 
 ### FFI Example
 This example uses libdiscount to convert markdown text to html. 
