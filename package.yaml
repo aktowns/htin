@@ -29,11 +29,13 @@ dependencies:
 - filepath
 - formatting
 - haskeline
+- libffi
 - megaparsec
 - mtl
 - text
 - time
 - transformers
+- unix
 
 library:
   source-dirs: src

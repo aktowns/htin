@@ -5,7 +5,6 @@ import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.State    (runStateT)
 import           Data.Monoid            ((<>))
 import qualified Data.Text              as T
-import           Debug.Trace            (traceM)
 import           Text.Megaparsec        (parse)
 import           Text.Megaparsec.Error  (parseErrorPretty')
 
@@ -14,6 +13,7 @@ import           Builtins.Core          (CoreBuiltin (..))
 import           Builtins.DateTime      (DateTimeBuiltin (..))
 import           Builtins.Env           (EnvBuiltin (..))
 import           Builtins.Equality      (EqualityBuiltin (..))
+import           Builtins.FFI           (FFIBuiltin (..))
 import           Builtins.File          (FileBuiltin (..))
 import           Builtins.List          (ListBuiltin (..))
 import           Builtins.Math          (MathBuiltin (..))
@@ -53,6 +53,7 @@ someFunc = do
           addBuiltins EqualityBuiltin
           addBuiltins EnvBuiltin
           addBuiltins SystemBuiltin
+          addBuiltins FFIBuiltin
           evaluateSource "prelude.tin" prelude
     case res of
         Left (RuntimeException errar) -> do

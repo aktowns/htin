@@ -1,29 +1,34 @@
-{-# LANGUAGE FlexibleInstances    #-}
-{-# LANGUAGE RecordWildCards      #-}
-{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE FlexibleInstances         #-}
+{-# LANGUAGE Rank2Types                #-}
+{-# LANGUAGE RecordWildCards           #-}
+{-# LANGUAGE TypeSynonymInstances      #-}
 module Types where
 
-import           Control.Exception      (Exception, SomeException)
-import           Control.Monad.Except   (ExceptT)
-import           Control.Monad.State    (StateT)
-import           Data.Foldable          (traverse_)
-import           Data.List              (intercalate)
-import qualified Data.List.NonEmpty     as Nel
-import qualified Data.Map               as M
-import           Data.Monoid            ((<>))
-import qualified Data.Set               as Set
-import           Data.Text              (Text)
-import qualified Data.Text              as T
-import qualified Data.Text.IO           as T
-import qualified Data.Text.Lazy.Builder as T
-import           Data.Typeable          (Typeable)
-import           Data.Void              (Void)
-import           Debug.Trace            (traceM)
+import           Control.Exception               (Exception, SomeException)
+import           Control.Monad.Except            (ExceptT)
+import           Control.Monad.State             (StateT)
+import           Data.Foldable                   (traverse_)
+import           Data.List                       (intercalate)
+import qualified Data.List.NonEmpty              as Nel
+import qualified Data.Map                        as M
+import           Data.Monoid                     ((<>))
+import qualified Data.Set                        as Set
+import           Data.Text                       (Text)
+import qualified Data.Text                       as T
+import qualified Data.Text.IO                    as T
+import qualified Data.Text.Lazy.Builder          as T
+import           Data.Typeable                   (Typeable)
+import           Data.Void                       (Void)
+import           Debug.Trace                     (traceM)
+import           Foreign.Ptr                     (FunPtr, Ptr)
 import           Formatting
-import           System.Directory       (doesFileExist)
-import           System.IO              (Handle)
-import           Text.Megaparsec        (SourcePos, initialPos, parseErrorPretty, parseErrorPretty', sourceName)
-import           Text.Megaparsec.Error  (ErrorFancy (..), ParseError (..))
+import           System.Directory                (doesFileExist)
+import           System.IO                       (Handle)
+import           System.Posix.DynamicLinker.Prim (DL)
+import           Text.Megaparsec                 (SourcePos, initialPos, parseErrorPretty, parseErrorPretty',
+                                                  sourceName)
+import           Text.Megaparsec.Error           (ErrorFancy (..), ParseError (..))
 
 import           Colour.TwentyFourBit
 
@@ -46,8 +51,20 @@ instance Ord LBuiltin where compare _ _ = EQ
 instance Ord LBuiltinVar where compare _ _ = EQ
 
 data HHandle = IOHandle Handle
-             | NetSocket
-             deriving (Eq, Show)
+             | FFIHandle DL
+             | forall a. FFIFunPointer (FunPtr a)
+             | FFIPointer (Ptr ())
+
+instance Show HHandle where
+    show (IOHandle x)      = "IOHandle: " ++ show x
+    show (FFIHandle dl)    = "FFIHandle: " ++ show dl
+    show (FFIFunPointer f) = "FFIFunPointer: " ++ show f
+    show (FFIPointer f)    = "FFIPointer: " ++ show f
+
+instance Eq HHandle where
+    (IOHandle x) == (IOHandle y) = x == y
+    (FFIHandle x) == (FFIHandle y) = False
+
 instance Ord HHandle where compare _ _ = EQ
 
 class HasPosition a where
@@ -173,4 +190,3 @@ isBuiltinVar _              = False
 toSExpr :: LVal -> LVal
 toSExpr (QExpr c xs) = SExpr c xs
 toSExpr x            = err (pos x) $ sformat ("expected QExpr but got " % lval) x
-
