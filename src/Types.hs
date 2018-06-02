@@ -1,8 +1,6 @@
-{-# LANGUAGE ExistentialQuantification #-}
-{-# LANGUAGE FlexibleInstances         #-}
-{-# LANGUAGE Rank2Types                #-}
-{-# LANGUAGE RecordWildCards           #-}
-{-# LANGUAGE TypeSynonymInstances      #-}
+{-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE RecordWildCards      #-}
+{-# LANGUAGE TypeSynonymInstances #-}
 module Types where
 
 import           Control.Exception               (Exception, SomeException)
@@ -52,7 +50,7 @@ instance Ord LBuiltinVar where compare _ _ = EQ
 
 data HHandle = IOHandle Handle
              | FFIHandle DL
-             | forall a. FFIFunPointer (FunPtr a)
+             | FFIFunPointer (FunPtr ())
              | FFIPointer (Ptr ())
 
 instance Show HHandle where
@@ -128,18 +126,6 @@ printPrettyError e = printPrettyError' e >>= T.putStrLn
 builtinPos :: SourcePos
 builtinPos = initialPos "<builtin>"
 
-err :: SourcePos -> Text -> LVal
-err = Err
-
-num :: SourcePos -> Integer -> LVal
-num = Num
-
-sexpr :: SourcePos -> [LVal] -> LVal
-sexpr = SExpr
-
-qexpr :: SourcePos -> [LVal] -> LVal
-qexpr = QExpr
-
 lval :: Format r (LVal -> r)
 lval = shown
 
@@ -165,9 +151,33 @@ isStr :: LVal -> Bool
 isStr (Str _ _) = True
 isStr _         = False
 
+isBoolean :: LVal -> Bool
+isBoolean (Boolean _ _) = True
+isBoolean _             = False
+
 isErr :: LVal -> Bool
 isErr (Err _ _) = True
 isErr _         = False
+
+isLambda :: LVal -> Bool
+isLambda (Lambda{..}) = True
+isLambda _            = False
+
+isIOHandle :: LVal -> Bool
+isIOHandle (Hnd _ (IOHandle _)) = True
+isIOHandle _                    = False
+
+isFFIHandle :: LVal -> Bool
+isFFIHandle (Hnd _ (FFIHandle _)) = True
+isFFIHandle _                     = False
+
+isFFIPointer :: LVal -> Bool
+isFFIPointer (Hnd _ (FFIPointer _)) = True
+isFFIPointer _                      = False
+
+isFFIFunPointer :: LVal -> Bool
+isFFIFunPointer (Hnd _ (FFIFunPointer _)) = True
+isFFIFunPointer _                         = False
 
 isNestedErr :: LVal -> Bool
 isNestedErr (Err _ _)    = True
@@ -189,4 +199,10 @@ isBuiltinVar _              = False
 
 toSExpr :: LVal -> LVal
 toSExpr (QExpr c xs) = SExpr c xs
-toSExpr x            = err (pos x) $ sformat ("expected QExpr but got " % lval) x
+toSExpr x            = Err (pos x) $ sformat ("expected QExpr but got " % lval) x
+
+unsafeToInt :: LVal -> Integer
+unsafeToInt (Num _ n) = n
+
+nil :: SourcePos -> LVal
+nil p = QExpr p []

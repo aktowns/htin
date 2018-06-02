@@ -5,30 +5,34 @@ import qualified Data.Text              as T
 import           System.Environment
 
 import           Builtins.Builtin
+import           Builtins.Guards
 import           Types
 
 data EnvBuiltin = EnvBuiltin deriving (Show)
 
 lookupEnvBuiltinDoc = Just "(env/lookup x)\nLooks up an environment variable, Returns nil if it doesn't exist"
 lookupEnvBuiltin :: LVal -> Context LVal
-lookupEnvBuiltin (SExpr _ xs)
-    | (Str p s) <- head xs = do
-        env <- liftIO $ lookupEnv (T.unpack s)
-        return $ maybe (QExpr p []) ((Str p) . T.pack) env
+lookupEnvBuiltin = checked' (properCC *> params 1 *> argType 1 tyStr >^ fn)
+    where
+        fn pos s = do
+            env <- liftIO $ lookupEnv (T.unpack s)
+            return $ maybe (nil pos) ((Str pos) . T.pack) env
 
 setEnvBuiltinDoc = Just "(env/set k v)\nSets the environment variable k to the value v"
 setEnvBuiltin :: LVal -> Context LVal
-setEnvBuiltin (SExpr _ xs)
-    | (Str p k') <- head xs, (Str _ v') <- xs !! 1 = do
-        liftIO $ setEnv (T.unpack k') (T.unpack v')
-        return $ QExpr p []
+setEnvBuiltin = checked' (properCC *> params 2 *> (argType 1 tyStr <+> argType 2 tyStr) >^ fn)
+    where
+        fn pos (k,v) = do
+            liftIO $ setEnv (T.unpack k) (T.unpack v)
+            return $ nil pos
 
 unsetEnvBuiltinDoc = Just "(env/unset k)\nUnset the environment variable k"
 unsetEnvBuiltin :: LVal -> Context LVal
-unsetEnvBuiltin (SExpr _ xs)
-    | (Str p k') <- head xs = do
-        liftIO $ unsetEnv (T.unpack k')
-        return $ QExpr p []
+unsetEnvBuiltin = checked' (properCC *> params 1 *> argType 1 tyStr >^ fn)
+    where
+        fn pos k = do
+            liftIO $ unsetEnv (T.unpack k)
+            return $ nil pos
 
 instance Builtin EnvBuiltin where
     globals _ = []

@@ -18,7 +18,7 @@ builtinOp Add (SExpr c xs) = return $ Num c $ sum $ map lvalNum xs
 builtinOp Sub (SExpr c xs) = return $ Num c $ foldl1 (-) $ map lvalNum xs
 builtinOp Mul (SExpr c xs) = return $ Num c $ product $ map lvalNum xs
 builtinOp Div (SExpr c xs) = return $ Num c $ foldl1 quot $ map lvalNum xs
-builtinOp x y              = return $ err (pos y) $ "incorrect type given to " <> tshow x <> " builtin. Expected SExpr given " <> tshow y
+builtinOp x y              = return $ Err (pos y) $ "incorrect type given to " <> tshow x <> " builtin. Expected SExpr given " <> tshow y
 
 builtinAddDoc = Just "(+ x y & xs)\nGives the sum of all provided numbers"
 builtinAdd :: LVal -> Context LVal

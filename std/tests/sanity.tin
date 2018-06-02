@@ -21,4 +21,8 @@
     (= {res} (catch {#t} (\ {err} {#f})))
     (expect res (to-eq #t))
   }
+  { it "keeps the error message intact" 
+    (= {res} (catch {eval (error "woo")} (\ {err} {show err})))
+    (expect res (to-eq "woo"))
+  }
 )

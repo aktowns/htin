@@ -41,7 +41,7 @@ call Lambda{..} (SExpr c args) = clonedContext $ do
     let (QExpr _ formals') = formals
     let curried = curriedArgs formals' args
     if not (isVarArg formals') && length args > length formals' then
-        throwError $ RuntimeException (err c "function given too many arguments")
+        throwError $ RuntimeException (Err c "function given too many arguments")
     else if not (null curried) then do
         let paenv = foldl (\acc (Sym _ k, v) -> (k,v) : acc) partialEnv $ argParser formals' args
         return $ Lambda c paenv Nothing (QExpr c curried) body
@@ -50,7 +50,7 @@ call Lambda{..} (SExpr c args) = clonedContext $ do
         traverse_ (\ (Sym _ k, v) -> addSymbol k v) $ argParser formals' args
         eval $ toSExpr body
 call err@(Err _ _) _   = throwError $ RuntimeException err
-call (QExpr p []) a    = throwError $ RuntimeException $ err p $ "attempted to call nil with args " <> tshow a
+call (QExpr p []) a    = throwError $ RuntimeException $ Err p $ "attempted to call nil with args " <> tshow a
 call x a               = error $ "internal error: unhandled call target " ++ show x ++ " with args " ++ show a
 
 eval :: LVal -> Context LVal
@@ -59,11 +59,13 @@ eval (Sym c n) = do
     case e of
       (Just e') | isBuiltinVar e' -> val e'
       (Just e')                   -> return e'
-      otherwise                   -> throwError $ RuntimeException (err c $ "variable " <> n <> " is not defined, are you missing an import?")
+      otherwise                   -> throwError $ RuntimeException (Err c $ "variable " <> n <> " is not defined, are you missing an import?")
 eval x@(SExpr c xs) = do
     evald <- traverse eval xs
-    if null evald             then return x
-    else if length evald == 1 then eval $ head xs
-    else call (head evald) $ SExpr c (tail evald)
+    if any isErr evald then throwError $ RuntimeException $ head (filter isErr evald)
+    else
+        if null evald             then return x
+        else if length evald == 1 then eval $ head xs
+        else call (head evald) $ SExpr c (tail evald)
 eval err@(Err _ _) = throwError $ RuntimeException err
 eval x = return x
