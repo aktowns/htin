@@ -1,9 +1,13 @@
-module Builtins.Math where
+{-# LANGUAGE QuasiQuotes #-}
+module Builtins.Math(MathBuiltin(..)) where
 
 import           Data.Monoid      ((<>))
+import           Data.Text        (Text)
+import           Formatting
 
 import           Builtins.Builtin
 import           Types
+import           Utils.Doc
 
 data MathBuiltin = MathBuiltin deriving (Show)
 
@@ -18,29 +22,45 @@ builtinOp Add (SExpr c xs) = return $ Num c $ sum $ map lvalNum xs
 builtinOp Sub (SExpr c xs) = return $ Num c $ foldl1 (-) $ map lvalNum xs
 builtinOp Mul (SExpr c xs) = return $ Num c $ product $ map lvalNum xs
 builtinOp Div (SExpr c xs) = return $ Num c $ foldl1 quot $ map lvalNum xs
-builtinOp x y              = return $ Err (pos y) $ "incorrect type given to " <> tshow x <> " builtin. Expected SExpr given " <> tshow y
+builtinOp x y              = return $ err (pos y) ("incorrect type given to " % shown % " builtin. Expected SExpr given " % lval) x y
 
-builtinAddDoc = Just "(+ x y & xs)\nGives the sum of all provided numbers"
-builtinAdd :: LVal -> Context LVal
-builtinAdd = builtinOp Add
+[genDoc|mathAdd
+(math/+ x y & xs)
 
-builtinSubDoc = Just "(- x y & xs)\nGives the result of substracting provided numbers in sequence"
-builtinSub :: LVal -> Context LVal
-builtinSub = builtinOp Sub
+Gives the sum of all provided numbers
+|]
+mathAdd :: LVal -> Context LVal
+mathAdd = builtinOp Add
 
-builtinMulDoc = Just "(* x y & xs)\nGives the product of all provided numbers"
-builtinMul :: LVal -> Context LVal
-builtinMul = builtinOp Mul
+[genDoc|mathSub
+(math/- x y & xs)
 
-builtinDivDoc = Just "(/ x y & xs)\nGives the result of dividing the provided numbers in sequence"
-builtinDiv :: LVal -> Context LVal
-builtinDiv = builtinOp Div
+Gives the result of substracting provided numbers in sequence
+|]
+mathSub :: LVal -> Context LVal
+mathSub = builtinOp Sub
+
+[genDoc|mathMul
+(math/* x y & xs)
+
+Gives the product of all provided numbers
+|]
+mathMul :: LVal -> Context LVal
+mathMul = builtinOp Mul
+
+[genDoc|mathDiv
+(math// x y & xs)
+
+Gives the result of dividing the provided numbers in sequence
+|]
+mathDiv :: LVal -> Context LVal
+mathDiv = builtinOp Div
 
 instance Builtin MathBuiltin where
-    builtins _ = [ ("+", builtinAddDoc, builtinAdd)
-                 , ("-", builtinSubDoc, builtinSub)
-                 , ("*", builtinMulDoc, builtinMul)
-                 , ("/", builtinDivDoc, builtinDiv)
+    builtins _ = [ ("math/+", mathAddDoc, mathAdd)
+                 , ("math/-", mathSubDoc, mathSub)
+                 , ("math/*", mathMulDoc, mathMul)
+                 , ("math//", mathDivDoc, mathDiv)
                  ]
     globals _ = []
     initial _ = return ()

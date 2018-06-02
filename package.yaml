@@ -33,6 +33,7 @@ dependencies:
 - megaparsec
 - mtl
 - text
+- template-haskell
 - time
 - transformers
 - unix
@@ -41,6 +42,13 @@ library:
   source-dirs: src
   default-extensions: 
   - OverloadedStrings
+  ghc-options:
+  - -Wall 
+  - -Werror
+  - -Wincomplete-uni-patterns 
+  - -Wincomplete-record-updates 
+  - -fwarn-unused-imports
+  - -fwarn-tabs
 
 executables:
   htin:
@@ -51,9 +59,9 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     - -Wall 
+    - -Werror
     - -Wincomplete-uni-patterns 
     - -Wincomplete-record-updates 
-    - -Wmissing-import-lists
     - -fwarn-unused-imports
     - -fwarn-tabs
     dependencies:

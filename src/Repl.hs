@@ -47,8 +47,8 @@ repl env = do
                 Just "interrupted" -> loop ref env'
                 Just input  -> do
                     newenv <- case parse Parser.expr "stdin" input of
-                        Left err  -> do
-                            outputStrLn $ parseErrorPretty' input err
+                        Left errar  -> do
+                            outputStrLn $ parseErrorPretty' input errar
                             return env'
                         Right ast -> do
                             liftIO $ cursorUpLine 1
@@ -56,11 +56,11 @@ repl env = do
                             outputStrLn $ "\r% " ++ T.unpack (pp ast)
                             res <- liftIO $ runExceptT $ runStateT (eval ast) env'
                             case res of
-                                Left (RuntimeException rte) -> do
-                                    err <- liftIO $ printPrettyError' rte
-                                    outputStr $ T.unpack err
+                                Left (RuntimeException exc) -> do
+                                    errar <- liftIO $ printPrettyError' exc
+                                    outputStr $ T.unpack errar
                                     return env'
-                                Right (val, ne) -> do
-                                    outputStrLn $ T.unpack (pp val)
+                                Right (value, ne) -> do
+                                    outputStrLn $ T.unpack (pp value)
                                     return ne
                     loop ref newenv

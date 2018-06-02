@@ -1,43 +1,55 @@
-module Builtins.Env where
+{-# LANGUAGE QuasiQuotes #-}
+module Builtins.Env(EnvBuiltin(..)) where
 
 import           Control.Monad.IO.Class (liftIO)
+import           Data.Text              (Text)
 import qualified Data.Text              as T
 import           System.Environment
 
 import           Builtins.Builtin
 import           Builtins.Guards
 import           Types
+import           Utils.Doc
 
 data EnvBuiltin = EnvBuiltin deriving (Show)
 
-lookupEnvBuiltinDoc = Just "(env/lookup x)\nLooks up an environment variable, Returns nil if it doesn't exist"
-lookupEnvBuiltin :: LVal -> Context LVal
-lookupEnvBuiltin = checked' (properCC *> params 1 *> argType 1 tyStr >^ fn)
-    where
-        fn pos s = do
-            env <- liftIO $ lookupEnv (T.unpack s)
-            return $ maybe (nil pos) ((Str pos) . T.pack) env
+[genDoc|envLookup
+(env/lookup x)
 
-setEnvBuiltinDoc = Just "(env/set k v)\nSets the environment variable k to the value v"
-setEnvBuiltin :: LVal -> Context LVal
-setEnvBuiltin = checked' (properCC *> params 2 *> (argType 1 tyStr <+> argType 2 tyStr) >^ fn)
-    where
-        fn pos (k,v) = do
-            liftIO $ setEnv (T.unpack k) (T.unpack v)
-            return $ nil pos
+Looks up an environment variable, Returns nil if it doesn't exist
+|]
+envLookup :: LVal -> Context LVal
+envLookup = checked' $ (properCC *> params 1 *> argType 1 tyStr) >^
+    \p s -> do
+        env <- liftIO $ lookupEnv (T.unpack s)
+        return $ maybe (nil p) ((Str p) . T.pack) env
 
-unsetEnvBuiltinDoc = Just "(env/unset k)\nUnset the environment variable k"
-unsetEnvBuiltin :: LVal -> Context LVal
-unsetEnvBuiltin = checked' (properCC *> params 1 *> argType 1 tyStr >^ fn)
-    where
-        fn pos k = do
-            liftIO $ unsetEnv (T.unpack k)
-            return $ nil pos
+[genDoc|envSet
+(env/set k v)
+
+Sets the environment variable k to the value v
+|]
+envSet :: LVal -> Context LVal
+envSet = checked' $ (properCC *> params 2 *> (argType 1 tyStr <+> argType 2 tyStr)) >^
+    \p (k,v) -> do
+        liftIO $ setEnv (T.unpack k) (T.unpack v)
+        return $ nil p
+
+[genDoc|envUnset
+(env/unset k)
+
+Unset the environment variable k
+|]
+envUnset :: LVal -> Context LVal
+envUnset = checked' $ (properCC *> params 1 *> argType 1 tyStr) >^
+    \p k -> do
+        liftIO $ unsetEnv (T.unpack k)
+        return $ nil p
 
 instance Builtin EnvBuiltin where
     globals _ = []
-    builtins _ = [ ("env/lookup", lookupEnvBuiltinDoc, lookupEnvBuiltin)
-                 , ("env/set", setEnvBuiltinDoc, setEnvBuiltin)
-                 , ("env/unset", unsetEnvBuiltinDoc, unsetEnvBuiltin)
+    builtins _ = [ ("env/lookup", envLookupDoc, envLookup)
+                 , ("env/set",    envSetDoc,    envSet)
+                 , ("env/unset",  envUnsetDoc,  envUnset)
                  ]
     initial _ = return ()

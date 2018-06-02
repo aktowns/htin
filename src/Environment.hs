@@ -5,7 +5,6 @@ import qualified Data.Map              as M
 import qualified Data.Map.Merge.Strict as MM
 import           Data.Text             (Text)
 import           Debug.Trace           (traceM)
-import           Formatting
 
 import           Types
 
@@ -18,26 +17,26 @@ envLookup x = do
         _           -> return $ Nothing
 
 addSymbol :: Text -> LVal -> Context ()
-addSymbol x val = do
+addSymbol x value = do
     (symtab, partab) <- get
-    put (M.insert x val symtab, partab)
+    put (M.insert x value symtab, partab)
     return ()
 
 addSymbolParent :: Text -> LVal -> Context ()
-addSymbolParent x val = do
+addSymbolParent x value = do
     (symtab, partab) <- get
-    put (symtab, M.insert x val partab)
+    put (symtab, M.insert x value partab)
     return ()
 
 clonedContext :: Context LVal -> Context LVal
 clonedContext c = do
     (symtab, partab) <- get
 
-    (val, (_, par)) <- lift $ runStateT c (symtab, partab)
+    (value, (_, par)) <- lift $ runStateT c (symtab, partab)
     let newPartab = MM.merge MM.preserveMissing MM.preserveMissing (MM.zipWithMatched $ \_ _ y -> y) partab par
 
     put (symtab, newPartab)
-    return val
+    return value
 
 traceEnv :: Context ()
 traceEnv = do

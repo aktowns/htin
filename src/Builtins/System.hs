@@ -1,7 +1,7 @@
-module Builtins.System where
+{-# LANGUAGE QuasiQuotes #-}
+module Builtins.System(SystemBuiltin(..)) where
 
 import           Control.Monad.IO.Class (liftIO)
-import           Data.List              (intercalate, isPrefixOf)
 import           Data.Text              (Text)
 import qualified Data.Text              as T
 import qualified Data.Text.IO           as T
@@ -10,6 +10,7 @@ import           System.Info
 
 import           Builtins.Builtin
 import           Types
+import           Utils.Doc
 
 data SystemBuiltin = SystemBuiltin deriving (Show)
 
@@ -19,37 +20,61 @@ linuxCPUNames = do
   pure . map (T.unwords . drop 3 . T.words) $
     filter ("model name" `T.isPrefixOf`) lines'
 
-osBuiltinCpuDoc = Just "sys/cpu returns the current cpu name"
-osBuiltinCpu :: Context LVal
-osBuiltinCpu = (Str builtinPos) . head <$> liftIO linuxCPUNames
+[genDoc|sysCpu
+sys/cpu
 
-osbuiltinCpuCoresDoc = Just "sys/cpu-cores returns the number of cores"
-osBuiltinCpuCores :: Context LVal
-osBuiltinCpuCores = (Num builtinPos) . toInteger . length <$> liftIO linuxCPUNames
+returns the current cpu name
+|]
+sysCpu :: Context LVal
+sysCpu = (Str builtinPos) . head <$> liftIO linuxCPUNames
 
-osBuiltinDoc = Just "sys/os returns the current operating system"
-osBuiltin :: Context LVal
-osBuiltin = return $ Str builtinPos (T.pack os)
+[genDoc|sysCpuCores
+sys/cpu-cores
 
-archBuiltinDoc = Just "sys/arch returns the current architecture"
-archBuiltin :: Context LVal
-archBuiltin = return $ Str builtinPos (T.pack arch)
+returns the number of cores
+|]
+sysCpuCores :: Context LVal
+sysCpuCores = (Num builtinPos) . toInteger . length <$> liftIO linuxCPUNames
 
-compilerNameBuiltinDoc = Just "sys/compiler returns the current compiler"
-compilerNameBuiltin :: Context LVal
-compilerNameBuiltin = return $ Str builtinPos (T.pack compilerName)
+[genDoc|sysOs
+sys/os
 
-compilerVersionBuiltinDoc = Just "sys/compiler-version returns the current compiler version"
-compilerVersionBuiltin :: Context LVal
-compilerVersionBuiltin = return $ Str builtinPos (T.intercalate "." $ map tshow $ versionBranch compilerVersion)
+returns the current operating system
+|]
+sysOs :: Context LVal
+sysOs = return $ Str builtinPos (T.pack os)
+
+[genDoc|sysArch
+sys/arch
+
+returns the current architecture
+|]
+sysArch :: Context LVal
+sysArch = return $ Str builtinPos (T.pack arch)
+
+[genDoc|sysCompilerName
+sys/compiler
+
+returns the current compiler
+|]
+sysCompilerName :: Context LVal
+sysCompilerName = return $ Str builtinPos (T.pack compilerName)
+
+[genDoc|sysCompilerVersion
+sys/compiler-version
+
+returns the current compiler version
+|]
+sysCompilerVersion :: Context LVal
+sysCompilerVersion = return $ Str builtinPos (T.intercalate "." $ map tshow $ versionBranch compilerVersion)
 
 instance Builtin SystemBuiltin where
     initial _ = return ()
-    globals _ = [ ("sys/os", osBuiltinDoc, osBuiltin)
-                , ("sys/arch", archBuiltinDoc, archBuiltin)
-                , ("sys/compiler", compilerNameBuiltinDoc, compilerNameBuiltin)
-                , ("sys/compiler-version", compilerVersionBuiltinDoc, compilerVersionBuiltin)
-                , ("sys/cpu", osBuiltinCpuDoc, osBuiltinCpu)
-                , ("sys/cpu-cores", osbuiltinCpuCoresDoc, osBuiltinCpuCores)
+    globals _ = [ ("sys/os",               sysOsDoc,              sysOs)
+                , ("sys/arch",             sysArchDoc,            sysArch)
+                , ("sys/compiler",         sysCompilerNameDoc,    sysCompilerName)
+                , ("sys/compiler-version", sysCompilerVersionDoc, sysCompilerVersion)
+                , ("sys/cpu",              sysCpuDoc,             sysCpu)
+                , ("sys/cpu-cores",        sysCpuCoresDoc,        sysCpuCores)
                 ]
     builtins _ = []

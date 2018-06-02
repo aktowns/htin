@@ -12,10 +12,10 @@ class (Show a) => Builtin a where
     initial  :: a -> Context ()
 
 addBuiltin :: Text -> Maybe Text -> LBuiltin -> Context ()
-addBuiltin x doc fn = addSymbolParent x $ Builtin builtinPos doc fn
+addBuiltin x bdoc fun = addSymbolParent x $ Builtin builtinPos bdoc fun
 
 addBuiltin' :: Text -> Maybe Text -> Context LVal -> Context ()
-addBuiltin' x doc fn = addSymbolParent x $ BuiltinVar builtinPos doc fn
+addBuiltin' x bdoc fun = addSymbolParent x $ BuiltinVar builtinPos bdoc fun
 
 addBuiltins :: Builtin a => a -> Context ()
 addBuiltins builtin = do

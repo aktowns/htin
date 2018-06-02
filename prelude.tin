@@ -1,3 +1,18 @@
+;; Some useful aliases
+
+; aliased from core builtins
+(core/def {catch def error eval if load load-verbose print println show \ =} 
+  core/catch core/def core/error core/eval core/if core/load core/load-verbose core/print core/println core/show core/\ core/=)
+
+; alias from equality builtins
+(core/def {== != > < >= <=} eq/== eq/!= ord/< ord/> ord/>= ord/<=)
+
+; aliased from list builtins
+(core/def {list head tail join} list/list list/head list/tail list/join)
+
+; aliased from math builtins
+(core/def {+ - * /} math/+ math/- math/* math//)
+
 ;;; Atoms
 (def {nil} {})
 (def {true} #t)

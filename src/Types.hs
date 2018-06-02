@@ -3,32 +3,29 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 module Types where
 
-import           Control.Exception               (Exception, SomeException)
+import           Control.Exception               (Exception)
 import           Control.Monad.Except            (ExceptT)
 import           Control.Monad.State             (StateT)
-import           Data.Foldable                   (traverse_)
-import           Data.List                       (intercalate)
 import qualified Data.List.NonEmpty              as Nel
 import qualified Data.Map                        as M
-import           Data.Monoid                     ((<>))
 import qualified Data.Set                        as Set
 import           Data.Text                       (Text)
 import qualified Data.Text                       as T
 import qualified Data.Text.IO                    as T
+import           Data.Text.Lazy                  (toStrict)
 import qualified Data.Text.Lazy.Builder          as T
 import           Data.Typeable                   (Typeable)
 import           Data.Void                       (Void)
-import           Debug.Trace                     (traceM)
 import           Foreign.Ptr                     (FunPtr, Ptr)
-import           Formatting
+import           Formatting                      (Format, runFormat, sformat, shown, (%))
 import           System.Directory                (doesFileExist)
 import           System.IO                       (Handle)
 import           System.Posix.DynamicLinker.Prim (DL)
 import           Text.Megaparsec                 (SourcePos, initialPos, parseErrorPretty, parseErrorPretty',
                                                   sourceName)
-import           Text.Megaparsec.Error           (ErrorFancy (..), ParseError (..))
+import           Text.Megaparsec.Error           (ErrorFancy (ErrorFail), ParseError (FancyError))
 
-import           Colour.TwentyFourBit
+import qualified Colour.TwentyFourBit            as C
 
 data RuntimeException = RuntimeException LVal
   deriving (Typeable, Show)
@@ -43,8 +40,8 @@ type LBuiltinVar = Context LVal
 
 instance Show LBuiltin where show _ = "<builtin>"
 instance Show LBuiltinVar where show _ = "<builtin var>"
-instance Eq LBuiltin where x == y = False
-instance Eq LBuiltinVar where x == y = False
+instance Eq LBuiltin where _ == _ = False
+instance Eq LBuiltinVar where _ == _ = False
 instance Ord LBuiltin where compare _ _ = EQ
 instance Ord LBuiltinVar where compare _ _ = EQ
 
@@ -61,7 +58,8 @@ instance Show HHandle where
 
 instance Eq HHandle where
     (IOHandle x) == (IOHandle y) = x == y
-    (FFIHandle x) == (FFIHandle y) = False
+    (FFIHandle _) == (FFIHandle _) = False
+    _ == _ = error "unhandled hhandle equality"
 
 instance Ord HHandle where compare _ _ = EQ
 
@@ -107,6 +105,7 @@ instance Eq LVal where
 
 toFancyError :: LVal -> ParseError Char Void
 toFancyError (Err p s) = FancyError (Nel.fromList [p]) (Set.singleton $ ErrorFail (T.unpack s))
+toFancyError _         = error "toFancyError called with non error"
 
 printPrettyError' :: LVal -> IO Text
 printPrettyError' e@(Err p _) = do
@@ -115,10 +114,11 @@ printPrettyError' e@(Err p _) = do
     if exists then do
         contents <- readFile $ sourceName p
         let perror = T.pack $ parseErrorPretty' contents fancyErr
-        return $ withColour fgBase08 perror
+        return $ C.withColour C.fgBase08 perror
     else do
         let perror = T.pack $ parseErrorPretty fancyErr
-        return $ withColour fgBase08 perror
+        return $ C.withColour C.fgBase08 perror
+printPrettyError' _ = error "printPrettyError' called with non error"
 
 printPrettyError :: LVal -> IO ()
 printPrettyError e = printPrettyError' e >>= T.putStrLn
@@ -131,13 +131,6 @@ lval = shown
 
 tshow :: (Show a) => a -> Text
 tshow = T.pack . show
-
-showParens :: Text -> Text -> Text -> Text
-showParens o c x = withColour fgBase05 o <> x <> withColour fgBase05 c
-
-showDoc :: Maybe Text -> Text
-showDoc (Just d) = withColour fgBase0c $ d <> "\n"
-showDoc _        = ""
 
 isNum :: LVal -> Bool
 isNum (Num _ _) = True
@@ -199,10 +192,56 @@ isBuiltinVar _              = False
 
 toSExpr :: LVal -> LVal
 toSExpr (QExpr c xs) = SExpr c xs
-toSExpr x            = Err (pos x) $ sformat ("expected QExpr but got " % lval) x
+toSExpr x            = err (pos x) ("expected QExpr but got" % lval) x
 
 unsafeToInt :: LVal -> Integer
 unsafeToInt (Num _ n) = n
+unsafeToInt _         = error "unsafeToInt called with non number type"
+
+unsafeToSym :: LVal -> Text
+unsafeToSym (Sym _ v) = v
+unsafeToSym _         = error "unsafeToSym called with non symbol type"
+
+unsafeToStr :: LVal -> Text
+unsafeToStr (Str _ v) = v
+unsafeToStr _         = error "unsafeToStr called with non string type"
+
+unsafeToBoolean :: LVal -> Bool
+unsafeToBoolean (Boolean _ v) = v
+unsafeToBoolean _             = error "unsafeToBoolean called with non boolean type"
+
+unsafeQExprList :: LVal -> [LVal]
+unsafeQExprList (QExpr _ xs) = xs
+unsafeQExprList _            = error "unsafeQExprList called with non qexpr type"
+
+unsafeSExprList :: LVal -> [LVal]
+unsafeSExprList (SExpr _ xs) = xs
+unsafeSExprList _            = error "unsafeSExprList called with non sexpr type"
+
+unsafeIOHandle :: LVal -> Handle
+unsafeIOHandle (Hnd _ (IOHandle v)) = v
+unsafeIOHandle _                    = error "unsafeIOHandle called with non IOHandle type"
+
+unsafeFFIHandle :: LVal -> DL
+unsafeFFIHandle (Hnd _ (FFIHandle h)) = h
+unsafeFFIHandle _                     = error "unsafeFFIHandle called with non FFIHandle type"
+
+unsafeFFIFunPointer :: LVal -> FunPtr ()
+unsafeFFIFunPointer (Hnd _ (FFIFunPointer f)) = f
+unsafeFFIFunPointer _                         = error "unsafeFFIFunPointer called with non FFIFunPointer type"
+
+unsafeError :: RuntimeException -> Text
+unsafeError (RuntimeException (Err _ v)) = v
+unsafeError _                            = error "sigh"
 
 nil :: SourcePos -> LVal
 nil p = QExpr p []
+
+fmt :: Format Text a -> a
+fmt = sformat
+
+err :: SourcePos -> Format LVal a -> a
+err x m = runFormat m (Err x . toStrict . T.toLazyText)
+
+rte :: SourcePos -> Format RuntimeException a -> a
+rte x m = runFormat m (RuntimeException . Err x . toStrict . T.toLazyText)

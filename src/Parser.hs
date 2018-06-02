@@ -1,13 +1,11 @@
 module Parser where
 
 import           Data.Char
-import           Data.Text                  (Text)
 import qualified Data.Text                  as T
 import           Data.Void
 import           Text.Megaparsec
 import           Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
-import           Text.Megaparsec.Expr
 
 import           Types
 
@@ -39,6 +37,7 @@ boolLit = do
 
 --comment :: Parser ()
 --comment = const () <$> (char ';' >> many L.charLiteral >> char '\n')
+comment :: Parser ()
 comment = lexeme (L.skipLineComment ";") <?> "comment"
 
 expr :: Parser LVal
@@ -75,11 +74,14 @@ pqexpr = do
     q <- qparens (many expr)
     return $ QExpr p q
 
+usableInitialChars :: Parser Char
 usableInitialChars =  ((satisfy (\x -> x /= ';' && isLetter x) <?> "letter")
                   <|> (satisfy (\x -> x /= ';' && isSymbol x) <?> "symbol")
                   <|> charCategory ConnectorPunctuation
                   <|> charCategory DashPunctuation
                   <|> charCategory OtherPunctuation) <?> "identifier"
+
+usableChars :: Parser Char
 usableChars = alphaNumChar <|> usableInitialChars
 
 identifier :: Parser LVal
