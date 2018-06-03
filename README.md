@@ -14,6 +14,15 @@ Apply the given function f to the items in list l returning the resulting list
 % 
 ```
 
+## Install
+
+Just run `stack install` or `make install` to run the test suite run `make test`
+
+## Usage
+
+Running socks without a filename loads the REPL, giving a file name or using `#!/usr/bin/env socks` (a shebang) at the top of a 
+file and making it executable will run it. You can also pipe content to socks for example `echo '(println "Hello")' | socks`.
+
 ## Examples
 
 ### Higher order functions

@@ -1,10 +1,12 @@
 {-# LANGUAGE RecordWildCards #-}
 module Core(call, eval) where
 
-import           Control.Monad.Except (throwError)
-import           Data.Foldable        (traverse_)
-import           Data.Monoid          ((<>))
-import qualified Data.Text            as T
+import           Control.Monad.Except  (throwError)
+import           Data.Foldable         (traverse_)
+import           Data.Monoid           ((<>))
+import qualified Data.Text             as T
+import           System.FilePath.Posix (dropFileName, takeFileName)
+import           Text.Megaparsec       (SourcePos (sourceName))
 
 import           Environment
 import           Types
@@ -29,6 +31,10 @@ call (QExpr p []) a    = throwError $ RuntimeException $ Err p $ "attempted to c
 call x a               = error $ "internal error: unhandled call target " ++ show x ++ " with args " ++ show a
 
 eval :: LVal -> Context LVal
+-- This is a bit of a hack to get the calling file from pos
+eval (Sym c "current-file")      = return $ Str c (T.pack $ sourceName c)
+eval (Sym c "current-file-name") = return $ Str c (T.pack $ takeFileName $ sourceName c)
+eval (Sym c "current-directory") = return $ Str c (T.pack $ dropFileName $ sourceName c)
 eval (Sym c n) = do
     e <- envLookup n
     case e of

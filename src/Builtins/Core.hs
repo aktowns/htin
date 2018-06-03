@@ -14,7 +14,8 @@ import qualified Data.Text.IO           as T
 import           System.Directory
 import           System.Environment
 import           System.FilePath
-import           Text.Megaparsec        (parse)
+import           System.FilePath.Posix  (dropFileName)
+import           Text.Megaparsec        (SourcePos (sourceName), parse)
 import           Text.Megaparsec.Error  (parseErrorPretty')
 
 import           Builtins.Builtin
@@ -44,7 +45,7 @@ searchForFile path (x:xs) = do
 
 searchPaths :: IO [FilePath]
 searchPaths = do
-    paths <- lookupEnv "TIN_PATH"
+    paths <- lookupEnv "SOCKS_PATH"
     current <- getCurrentDirectory
     case paths of
         Nothing -> return [current]
@@ -116,7 +117,8 @@ Loads the given file into the current environment
 coreLoad :: LVal -> Context LVal
 coreLoad = checked' $ (properCC *> params 1 *> argType 1 tyStr) >^ \p path -> do
     verbose <- liftIO $ isInteractive
-    searchDirs <- liftIO searchPaths
+    searchDirs <- if T.isPrefixOf "./" path then return [dropFileName $ sourceName p]
+                                            else liftIO searchPaths
     maybeFile <- liftIO $ searchForFile (T.unpack path) searchDirs
     case maybeFile of
       Nothing -> throwError $ RuntimeException $ Err p ("Failed to load file " <> path)
