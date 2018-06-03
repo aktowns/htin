@@ -119,14 +119,14 @@ coreLoad = checked' $ (properCC *> params 1 *> argType 1 tyStr) >^ \p path -> do
     searchDirs <- liftIO searchPaths
     maybeFile <- liftIO $ searchForFile (T.unpack path) searchDirs
     case maybeFile of
-      Nothing -> return $ Boolean p False
+      Nothing -> throwError $ RuntimeException $ Err p ("Failed to load file " <> path)
       Just file -> do
         liftIO $ when verbose $ putStrLn $ "loading file " ++ file
         contents <- liftIO $ readFile file
         case parse Parser.exprs file contents of
             Left errar -> do
                 liftIO $ putStrLn (parseErrorPretty' contents errar)
-                return $ Boolean p False
+                throwError $ RuntimeException $ Err p ("Failed to parse file" <> path)
             Right x  -> do
                 ok <- flip traverse x $ \expr -> do
                     evald <- eval expr

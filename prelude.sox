@@ -50,7 +50,6 @@
 })
 
 (load "test.sox")
-(load "tests/sanity.sox")
 
 (if is-interactive {load "showbanner.sox"} {})
 
