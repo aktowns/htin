@@ -1,4 +1,4 @@
-(load "colour.tin")
+(load "colour.sox")
 
 (fun {assert l r msg} "(assert l r msg)\nAssert that the left side is equal to the right, if it isn't print the msg" {
   if (== l r) 

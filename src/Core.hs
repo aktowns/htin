@@ -1,5 +1,5 @@
 {-# LANGUAGE RecordWildCards #-}
-module Core where
+module Core(call, eval) where
 
 import           Control.Monad.Except (throwError)
 import           Data.Foldable        (traverse_)
@@ -8,29 +8,6 @@ import qualified Data.Text            as T
 
 import           Environment
 import           Types
-
-argParser :: [LVal] -> [LVal] -> [(LVal, LVal)]
-argParser [] []                        = []
-argParser _ []                         = []
-argParser [formal] [arg]               = [(formal, arg)]
-argParser (formal:xs) args@(_:xs')
-    | (Sym c n) <- formal, n == "&"    = [(last xs, QExpr c args)]
-    | otherwise                        = (formal, head args) : argParser xs xs'
-argParser x y                          = error $ "internal error: argParser unhandled " ++ show x ++ " vs " ++ show y
-
-curriedArgs :: [LVal] -> [LVal] -> [LVal]
-curriedArgs [] []                        = []
-curriedArgs formals []                   = formals
-curriedArgs [_] [_]                      = []
-curriedArgs [] _                         = []
-curriedArgs (formal:xs) (_:xs')
-      | (Sym _ n) <- formal, T.head n == '&' = []
-      | otherwise                            = curriedArgs xs xs'
-
-isVarArg :: [LVal] -> Bool
-isVarArg []            = False
-isVarArg (Sym _ "&":_) = True
-isVarArg (_:xs)        = isVarArg xs
 
 call :: LVal -> LVal -> Context LVal
 call Builtin{..} args        = fn args
@@ -67,3 +44,26 @@ eval x@(SExpr c xs) = do
         else call (head evald) $ SExpr c (tail evald)
 eval errar@(Err _ _) = throwError $ RuntimeException errar
 eval x = return x
+
+argParser :: [LVal] -> [LVal] -> [(LVal, LVal)]
+argParser [] []                        = []
+argParser _ []                         = []
+argParser [formal] [arg]               = [(formal, arg)]
+argParser (formal:xs) args@(_:xs')
+    | (Sym c n) <- formal, n == "&"    = [(last xs, QExpr c args)]
+    | otherwise                        = (formal, head args) : argParser xs xs'
+argParser x y                          = error $ "internal error: argParser unhandled " ++ show x ++ " vs " ++ show y
+
+curriedArgs :: [LVal] -> [LVal] -> [LVal]
+curriedArgs [] []                        = []
+curriedArgs formals []                   = formals
+curriedArgs [_] [_]                      = []
+curriedArgs [] _                         = []
+curriedArgs (formal:xs) (_:xs')
+      | (Sym _ n) <- formal, T.head n == '&' = []
+      | otherwise                            = curriedArgs xs xs'
+
+isVarArg :: [LVal] -> Bool
+isVarArg []            = False
+isVarArg (Sym _ "&":_) = True
+isVarArg (_:xs)        = isVarArg xs

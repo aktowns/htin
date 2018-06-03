@@ -1,7 +1,6 @@
 module Builtins.Builtin where
 
 import           Data.Text   (Text)
-import           Debug.Trace (traceM)
 
 import           Environment
 import           Types
@@ -19,11 +18,8 @@ addBuiltin' x bdoc fun = addSymbolParent x $ BuiltinVar builtinPos bdoc fun
 
 addBuiltins :: Builtin a => a -> Context ()
 addBuiltins builtin = do
-    traceM $ "loading globals for " ++ show builtin
     addGlobals' $ globals builtin
-    traceM $ "loading builtins for " ++ show builtin
     addBuiltins' $ builtins builtin
-    traceM $ "loading initializer for " ++ show builtin
     initial builtin
     where
         addBuiltins' []           = return ()

@@ -9,7 +9,8 @@ copyright:           "2018 Ashley Towns"
 extra-source-files:
 - README.md
 - ChangeLog.md
-- prelude.tin
+- prelude.sox
+- showbanner.sox
 
 # Metadata used when publishing your package
 # synopsis:            Short description of your package
@@ -51,7 +52,7 @@ library:
   - -fwarn-tabs
 
 executables:
-  htin:
+  socks:
     main:                Main.hs
     source-dirs:         app
     ghc-options:

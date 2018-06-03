@@ -1,8 +1,8 @@
 ;; Some useful aliases
 
 ; aliased from core builtins
-(core/def {catch def error eval if load load-verbose print println show \ =} 
-  core/catch core/def core/error core/eval core/if core/load core/load-verbose core/print core/println core/show core/\ core/=)
+(core/def {catch def error eval if load print println show \ =} 
+  core/catch core/def core/error core/eval core/if core/load core/print core/println core/show core/\ core/=)
 
 ; alias from equality builtins
 (core/def {== != > < >= <=} eq/== eq/!= ord/< ord/> ord/>= ord/<=)
@@ -26,10 +26,10 @@
   def (head f) (\ (tail f) b)
 }))
 
-(load-verbose "functional.tin")
-(load-verbose "logical.tin")
-(load-verbose "numeric.tin")
-(load-verbose "cond.tin")
+(load "functional.sox")
+(load "logical.sox")
+(load "numeric.sox")
+(load "cond.sox")
 
 ;;; Misc Functions
 
@@ -37,7 +37,7 @@
 (fun {ghost & xs} "(ghost & xs)\ndrop first argument and evaluate" {eval xs})
 (fun {comp f g x} "(comp f g x)\napply f to the result of g applied to x" {f (g x)})
 
-(load-verbose "list.tin")
+(load "list.sox")
 
 ;;; Other Fun
 
@@ -49,7 +49,8 @@
     { otherwise (+ (fib (- n 1)) (fib (- n 2))) }
 })
 
-(load-verbose "test.tin")
-(load-verbose "tests/sanity.tin")
+(load "test.sox")
+(load "tests/sanity.sox")
 
-(load-verbose "showbanner.tin")
+(if is-interactive {load "showbanner.sox"} {})
+

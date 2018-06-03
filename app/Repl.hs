@@ -3,8 +3,9 @@ module Repl where
 import           Control.Monad.Except     (runExceptT)
 import           Control.Monad.IO.Class   (MonadIO, liftIO)
 import           Control.Monad.State      (runStateT)
+import           Data.Char                (isSpace)
 import           Data.IORef
-import           Data.List                (isPrefixOf)
+import           Data.List                (dropWhile, dropWhileEnd, isPrefixOf)
 import qualified Data.Map                 as M
 import qualified Data.Text                as T
 import           System.Console.ANSI
@@ -32,6 +33,9 @@ completion ref str = do
     let prefixed = filter (str `isPrefixOf`) (map T.unpack $ M.keys $ snd compls)
     return $ map simpleCompletion prefixed
 
+trim :: [Char] -> [Char]
+trim = dropWhileEnd isSpace . dropWhile isSpace
+
 repl :: SymTab -> IO ()
 repl env = do
     completions <- newIORef env
@@ -41,10 +45,11 @@ repl env = do
         loop ref env' = do
             liftIO $ modifyIORef ref (const env')
             minput <- handle (\Interrupt -> return $ Just "interrupted") $ getInputLine "% "
-            case minput of
+            case trim <$> minput of
                 Nothing     -> return ()
                 Just "quit" -> return ()
                 Just "interrupted" -> loop ref env'
+                Just "" -> loop ref env'
                 Just input  -> do
                     newenv <- case parse Parser.expr "stdin" input of
                         Left errar  -> do

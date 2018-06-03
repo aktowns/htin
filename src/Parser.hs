@@ -35,13 +35,16 @@ boolLit = do
     b <- (const True <$> symbol "#t" <|> const False <$> symbol "#f")
     return $ Boolean p b
 
+shebang :: Parser ()
+shebang = lexeme (L.skipLineComment "#!") <?> "shebang"
+
 --comment :: Parser ()
 --comment = const () <$> (char ';' >> many L.charLiteral >> char '\n')
 comment :: Parser ()
 comment = lexeme (L.skipLineComment ";") <?> "comment"
 
 expr :: Parser LVal
-expr = skipMany comment >> (integer <|> stringLit <|> boolLit <|> psexpr <|> pqexpr <|> identifier)
+expr = skipMany comment >> skipMany shebang >> (integer <|> stringLit <|> boolLit <|> psexpr <|> pqexpr <|> identifier)
 
 exprs :: Parser [LVal]
 exprs = many expr

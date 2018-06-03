@@ -4,7 +4,6 @@ import           Control.Monad.State
 import qualified Data.Map              as M
 import qualified Data.Map.Merge.Strict as MM
 import           Data.Text             (Text)
-import           Debug.Trace           (traceM)
 
 import           Types
 
@@ -37,11 +36,6 @@ clonedContext c = do
 
     put (symtab, newPartab)
     return value
-
-traceEnv :: Context ()
-traceEnv = do
-    envs <- get
-    traceM $ show envs
 
 emptyEnv :: SymTab
 emptyEnv = (M.fromList [], M.fromList [])

@@ -21,6 +21,7 @@ import           Builtins.Builtin
 import           Builtins.Guards
 import           Core                   (call, eval)
 import           Environment            (addSymbol, addSymbolParent, emptyPartialEnv)
+import           Lib                    (isInteractive)
 import qualified Parser
 import           Types
 import           Utils.Doc
@@ -112,8 +113,9 @@ coreCatch = checked' $ (properCC *> params 2 *> argType 1 tyQExpr <+> argTypeChe
 
 Loads the given file into the current environment
 |]
-coreLoad :: Bool -> LVal -> Context LVal
-coreLoad verbose = checked' $ (properCC *> params 1 *> argType 1 tyStr) >^ \p path -> do
+coreLoad :: LVal -> Context LVal
+coreLoad = checked' $ (properCC *> params 1 *> argType 1 tyStr) >^ \p path -> do
+    verbose <- liftIO $ isInteractive
     searchDirs <- liftIO searchPaths
     maybeFile <- liftIO $ searchForFile (T.unpack path) searchDirs
     case maybeFile of
@@ -196,14 +198,16 @@ Returns an error with the value str
 coreError :: LVal -> Context LVal
 coreError = checked $ (properCC *> params 1 *> argType 1 tyStr) >^ Err
 
+coreInteractive :: Context LVal
+coreInteractive = liftIO $ Boolean builtinPos <$> isInteractive
+
 instance Builtin CoreBuiltin where
     builtins _ = [ ("core/catch",        coreCatchDoc,   coreCatch)
                  , ("core/def",          coreDefDoc,     coreDef)
                  , ("core/error",        coreErrorDoc,   coreError)
                  , ("core/eval",         coreEvalDoc,    coreEval)
                  , ("core/if",           coreIfDoc,      coreIf)
-                 , ("core/load",         coreLoadDoc,    coreLoad False)
-                 , ("core/load-verbose", coreLoadDoc,    coreLoad True)
+                 , ("core/load",         coreLoadDoc,    coreLoad)
                  , ("core/print",        corePrintDoc,   corePrint)
                  , ("core/println",      corePrintlnDoc, corePrintln)
                  , ("core/show",         coreShowDoc,    coreShow)
@@ -211,5 +215,7 @@ instance Builtin CoreBuiltin where
                  , ("core/=",            coreAssDoc,     coreAss)
                  ]
     globals _ = [ ("version", Just "shows the version", return $ QExpr builtinPos [Num builtinPos 0, Num builtinPos 0, Num builtinPos 1])
-                , ("help", Just "show the help", return $ Str builtinPos "The help is a lie")]
+                , ("help", Just "show the help", return $ Str builtinPos "The help is a lie")
+                , ("is-interactive", Just "are we in an interactive session?", coreInteractive)
+                ]
     initial _ = return ()

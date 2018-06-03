@@ -1,0 +1,15 @@
+(= {libmarkdown} (ffi/dlopen "/usr/lib/libmarkdown.so"))
+(= {mkd-string-sym} (ffi/dlsym libmarkdown "mkd_string"))
+(= {markdown-sym} (ffi/dlsym libmarkdown "markdown"))
+
+(= {libc} (ffi/dlopen "/lib/libc.so.6"))
+(= {stdout} (ffi/deref (ffi/dlsym libc "stdout")))
+(= {strlen} (ffi/dlsym libc "strlen"))
+
+(= {ffi-strlen} (ffi/call strlen ffi/sint32 {ffi/string}))
+(= {ffi-mkd-string} (ffi/call mkd-string-sym ffi/ptr {ffi/string ffi/sint32 ffi/sint32}))
+(= {ffi-markdown} (ffi/call markdown-sym ffi/sint32 {ffi/ptr ffi/ptr ffi/sint32}))
+
+(fun {markdown input} "(markdown input)\nconverts and prints the given markdown string to html" { do
+  (= {doc} (ffi-mkd-string input (ffi-strlen input) 0))
+  (ffi-markdown doc stdout 0)})
