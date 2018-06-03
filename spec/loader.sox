@@ -1,0 +1,6 @@
+(load "test.sox")
+(println "Running test suite")
+
+(load "./sanity.sox")
+(load "./std/math.sox")
+(load "./std/equality.sox")

@@ -33,20 +33,20 @@ eqNe = checked $ (properCC *> minParams 2 *> args) >^
 [genDoc|ordGt
 (ord/> x y & xs)
 
-Returns #t if values are in monotonically increasing order
+Returns #t if values are in monotonically decreasing order
 |]
 ordGt :: LVal -> Context LVal
 ordGt = checked $ (properCC *> minParams 2 *> args) >^
-    \p xs -> Boolean p (and $ zipWith (>) xs $ drop 1 xs)
+    \p xs -> Boolean p (and (zipWith (<) xs $ tail xs))
 
 [genDoc|ordLt
 (ord/< x y & xs)
 
-Returns #t if values are in monotonically decreasing order
+Returns #t if values are in monotonically increasing order
 |]
 ordLt :: LVal -> Context LVal
 ordLt = checked $ (properCC *> minParams 2 *> args) >^
-    \p xs -> Boolean p (and $ zipWith (<) xs $ drop 1 xs)
+    \p xs -> Boolean p (and (zipWith (>) xs $ tail xs))
 
 [genDoc|ordGe
 (ord/>= x y & xs)

@@ -1,0 +1,10 @@
+(describe "math" 
+  { it "adds two numbers together" (expect (+ 1 1) (to-eq 2))}
+  { it "adds multiple numbers together" (expect (+ 1 2 3 4 5) (to-eq 15))}
+  { it "subtracts two numbers" (expect (- 1 1) (to-eq 0))}
+  { it "subtracts multiple numbers" (expect (- 20 1 2 3 4 5) (to-eq 5))}
+  { it "multiplies two numbers" (expect (* 2 4) (to-eq 8))}
+  { it "multiplies multiple numbers" (expect (* 2 2 4) (to-eq 16))}
+  { it "divides two numbers" (expect (/ 10 5) (to-eq 2))}
+  { it "divides multiple numbers" (expect (/ 20 5 2) (to-eq 2))}
+)

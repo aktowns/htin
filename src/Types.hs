@@ -90,7 +90,18 @@ data LVal = Err        SourcePos Text
           | Lambda     { sourcePos :: SourcePos, partialEnv :: [(Text, LVal)], doc :: Maybe Text, formals :: LVal, body :: LVal }
           | SExpr      SourcePos [LVal]
           | QExpr      SourcePos [LVal]
-          deriving (Ord, Show)
+          deriving (Show)
+
+instance Ord LVal where
+    compare (Err _ x) (Err _ y)         = compare x y
+    compare (Num _ x) (Num _ y)         = compare x y
+    compare (Sym _ x) (Sym _ y)         = compare x y
+    compare (Str _ x) (Str _ y)         = compare x y
+    compare (Boolean _ x) (Boolean _ y) = compare x y
+    compare (Hnd _ x) (Hnd _ y)         = compare x y
+    compare (SExpr _ x) (SExpr _ y)     = compare x y
+    compare (QExpr _ x) (QExpr _ y)     = compare x y
+    compare x y                         = error $ "order not defined for " ++ show x ++ " and " ++ show y
 
 instance Eq LVal where
     (Err _ x) == (Err _ y) = x == y

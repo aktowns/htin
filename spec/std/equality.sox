@@ -1,0 +1,18 @@
+(describe "equality"
+  {it "can check number equality" (expect (== 1 1) (to-eq #t))}
+  {it "can check string equality" (expect (== "1" "1") (to-eq #t))}
+  {it "can check boolean equality" (expect (== #f #f) (to-eq #t))}
+  {it "can check list equality" (expect (== {1 2 3} {1 2 3}) (to-eq #t))}
+  {it "can check number inequality" (expect (!= 1 9) (to-eq #t))}
+  {it "can check string inequality" (expect (!= "1" "2") (to-eq #t))}
+  {it "can check boolean inequality" (expect (!= #f #t) (to-eq #t))}
+  {it "can check list inequality" (expect (!= {1 2 3} {1 2 2}) (to-eq #t))}
+  {it "can compare two numbers greater than" (expect (> 2 1) (to-eq #t))}
+  {it "can compare multiple numbers greater than" (expect (> 6 5 4 3 2 1) (to-eq #t))}
+  {it "can compare two numbers less than" (expect (< 1 2) (to-eq #t))}
+  {it "can compare multiple numbers less than" (expect (< 2 3 4 5 6) (to-eq #t))}
+  {it "can compare two numbers greater than equal to" (expect (>= 2 1) (to-eq #t))}
+  {it "can compare multiple numbers greater than equal to" (expect (>= 6 5 4 3 3 2 1) (to-eq #t))}
+  {it "can compare two numbers less than equal to" (expect (<= 1 2) (to-eq #t))}
+  {it "can compare multiple numbers less than equal to" (expect (<= 2 3 3 4 5 6) (to-eq #t))}
+)
